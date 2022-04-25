@@ -22,6 +22,13 @@ import advancements from "./Advancements";
 import lightning from "./Lightning";
 import cryo from "./Cryo";
 import earth from "./Earth";
+import { addTooltip, TooltipDirection } from "features/tooltips/tooltip";
+import { createResourceTooltip } from "features/trees/tree";
+import {
+    createModifierSection,
+    createMultiplicativeModifier,
+    createSequentialModifier
+} from "game/modifiers";
 
 const layer = createLayer("a", () => {
     const id = "a";
@@ -100,30 +107,25 @@ const layer = createLayer("a", () => {
         return req;
     });
 
-    const gainMult = computed(() => {
-        let mult = Decimal.dOne;
-
-        if (lightning.lightningSel.value == 2)
-            mult = mult.times(lightning.clickableEffects[2].value);
-        if (
-            advancements.milestones[4].earned.value &&
-            Decimal.lte(time.value, advancements.adv5time.value)
-        )
-            mult = mult.times(3);
-
-        return mult;
-    });
-
     const conversion = createCumulativeConversion(() => ({
         scaling: createPolynomialScaling(baseAquaParticleReq, 1 / 3),
         baseResource: main.particles,
         gainResource: aqua,
         roundUpCost: true,
-        gainModifier: {
-            apply: gain => Decimal.mul(gain, gainMult.value),
-            revert: gain => Decimal.div(gain, gainMult.value),
-            enabled: true
-        }
+        gainModifier: createSequentialModifier(
+            createMultiplicativeModifier(
+                lightning.clickableEffects[2],
+                "Lightning Option 3",
+                () => lightning.lightningSel.value == 2
+            ),
+            createMultiplicativeModifier(
+                3,
+                "Advancement 5",
+                () =>
+                    advancements.milestones[4].earned.value &&
+                    Decimal.lte(time.value, advancements.adv5time.value)
+            )
+        )
     }));
 
     const aquaBarSpeed = computed(() => {
@@ -170,12 +172,22 @@ const layer = createLayer("a", () => {
         color,
         reset
     }));
+    addTooltip(treeNode, {
+        display: createResourceTooltip(aqua),
+        pinnable: true
+    });
 
     const resetButton = createResetButton(() => ({
         conversion,
         tree: main.tree,
         treeNode
     }));
+    /*addTooltip(resetButton, {
+        display: jsx(() => createModifierSection("Modifiers", "", conversion.gainModifier, Decimal.floor(conversion.scaling.currentGain(conversion)))),
+        pinnable: true,
+        direction: TooltipDirection.DOWN,
+        style: "width: 400px; text-align: left"
+    });*/ // you can't click the layer for some reason when this is active
 
     return {
         id,

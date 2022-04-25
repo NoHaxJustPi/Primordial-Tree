@@ -5,18 +5,20 @@
 
 import { createLayerTreeNode, createResetButton } from "data/common";
 import { main } from "data/projEntry";
-import MainDisplay from "features/resources/MainDisplay.vue";
 import { createCumulativeConversion } from "features/conversion";
-import { createReset } from "features/reset";
-import { createResource } from "features/resources/resource";
-import { createLayer } from "game/layers";
-import Decimal, { DecimalSource } from "lib/break_eternity";
-import { coerceComponent, render } from "util/vue";
 import { CoercableComponent, jsx, Visibility } from "features/feature";
 import { createMilestone } from "features/milestones/milestone";
-import { computed, ComputedRef } from "vue";
-import { formatWhole } from "util/break_eternity";
+import { createReset } from "features/reset";
+import MainDisplay from "features/resources/MainDisplay.vue";
+import { createResource } from "features/resources/resource";
+import { addTooltip, TooltipDirection } from "features/tooltips/tooltip";
+import { createResourceTooltip } from "features/trees/tree";
+import { createLayer } from "game/layers";
+import Decimal, { DecimalSource } from "lib/break_eternity";
 import { format } from "util/bignum";
+import { formatWhole } from "util/break_eternity";
+import { coerceComponent, render } from "util/vue";
+import { computed, ComputedRef } from "vue";
 import earth from "./Earth";
 
 const layer = createLayer("adv", () => {
@@ -74,6 +76,11 @@ const layer = createLayer("adv", () => {
         reset,
         glowColor: () => (Decimal.gt(conversion.actualGain.value, 0) ? "red" : "")
     }));
+    addTooltip(treeNode, {
+        display: createResourceTooltip(advancements),
+        pinnable: true,
+        direction: TooltipDirection.RIGHT
+    });
 
     const resetButton = createResetButton(() => ({
         conversion,
@@ -111,6 +118,9 @@ const layer = createLayer("adv", () => {
                         <Display />
                     </>
                 ))
+            },
+            style: {
+                width: "30em"
             }
         }));
     }

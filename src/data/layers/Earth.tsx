@@ -3,22 +3,23 @@
  * @hidden
  */
 import { createLayerTreeNode, createResetButton } from "data/common";
+import { createClickable } from "features/clickables/clickable";
 import { createCumulativeConversion, createPolynomialScaling } from "features/conversion";
+import { jsx, Visibility } from "features/feature";
+import { createGrid } from "features/grids/grid";
 import { createReset } from "features/reset";
 import MainDisplay from "features/resources/MainDisplay.vue";
 import { createResource, trackBest } from "features/resources/resource";
+import { addTooltip } from "features/tooltips/tooltip";
+import { createResourceTooltip } from "features/trees/tree";
 import { createLayer } from "game/layers";
 import Decimal, { DecimalSource } from "lib/break_eternity";
-import { main } from "../projEntry";
-import flame from "./Flame";
-import advancements from "./Advancements";
-import { jsx, Visibility } from "features/feature";
-import { render } from "util/vue";
-import { createGrid } from "features/grids/grid";
 import { format, formatWhole } from "util/break_eternity";
-import { computed, ref } from "vue";
-import { createClickable } from "features/clickables/clickable";
-import ModalVue from "components/Modal.vue";
+import { render } from "util/vue";
+import { computed } from "vue";
+import { main } from "../projEntry";
+import advancements from "./Advancements";
+import flame from "./Flame";
 
 const layer = createLayer("e", () => {
     const id = "e";
@@ -162,6 +163,11 @@ const layer = createLayer("e", () => {
         color,
         reset
     }));
+    addTooltip(treeNode, {
+        display: createResourceTooltip(earth),
+        pinnable: true,
+        style: () => (treeNode.visibility.value === Visibility.Visible ? "" : "display: none")
+    });
 
     const resetButton = createResetButton(() => ({
         conversion,

@@ -3,7 +3,12 @@
  * @hidden
  */
 import { main } from "data/projEntry";
-import { createCumulativeConversion, createPolynomialScaling } from "features/conversion";
+import {
+    Conversion,
+    ConversionOptions,
+    createCumulativeConversion,
+    createPolynomialScaling
+} from "features/conversion";
 import { jsx, Visibility } from "features/feature";
 import { createReset } from "features/reset";
 import MainDisplay from "features/resources/MainDisplay.vue";
@@ -24,6 +29,14 @@ import air from "./Air";
 import earth from "./Earth";
 import { globalBus } from "game/events";
 import { createClickable } from "features/clickables/clickable";
+import { addTooltip, TooltipDirection } from "features/tooltips/tooltip";
+import { createResourceTooltip } from "features/trees/tree";
+import {
+    createModifierSection,
+    createMultiplicativeModifier,
+    createSequentialModifier,
+    Modifier
+} from "game/modifiers";
 
 const layer = createLayer("l", () => {
     const id = "l";
@@ -34,6 +47,14 @@ const layer = createLayer("l", () => {
     const best = trackBest(life);
 
     const time = createResource<number>(0);
+
+    const baseReq = computed(() => {
+        let base = 10;
+
+        if (cryo.challenges[1].active.value) base = 1 / 0;
+
+        return base;
+    });
 
     const gainMult = computed(() => {
         let mult = Decimal.dOne;
@@ -51,25 +72,37 @@ const layer = createLayer("l", () => {
         return mult;
     });
 
-    const baseReq = computed(() => {
-        let base = 10;
-
-        if (cryo.challenges[1].active.value) base = 1 / 0;
-
-        return base;
-    });
-
-    const conversion = createCumulativeConversion(() => ({
-        scaling: createPolynomialScaling(baseReq, 1 / 3),
-        baseResource: main.particles,
-        gainResource: life,
-        roundUpCost: true,
-        gainModifier: {
-            apply: gain => Decimal.mul(gain, gainMult.value),
-            revert: gain => Decimal.div(gain, gainMult.value),
-            enabled: true
-        }
-    }));
+    const conversion: Conversion<ConversionOptions & { gainModifier: Required<Modifier> }> =
+        createCumulativeConversion(() => ({
+            scaling: createPolynomialScaling(baseReq, 1 / 3),
+            baseResource: main.particles,
+            gainResource: life,
+            roundUpCost: true,
+            gainModifier: createSequentialModifier(
+                createMultiplicativeModifier(
+                    buyableEffects[3],
+                    "Life Buyable 4",
+                    advancements.milestones[5].earned
+                ),
+                createMultiplicativeModifier(
+                    lightning.clickableEffects[2],
+                    "Lightning Option 3",
+                    () => lightning.lightningSel.value == 2
+                ),
+                createMultiplicativeModifier(
+                    3,
+                    "Advancement 5",
+                    () =>
+                        advancements.milestones[4].earned.value &&
+                        Decimal.lte(time.value, advancements.adv5time.value)
+                ),
+                createMultiplicativeModifier(
+                    air.windEff,
+                    "Wind Effect",
+                    advancements.milestones[6].earned
+                )
+            )
+        }));
 
     globalBus.on("update", diff => {
         if (advancements.milestones[3].earned.value)
@@ -277,12 +310,29 @@ const layer = createLayer("l", () => {
         reset,
         glowColor: () => (buyables.some(b => b.canPurchase.value) ? "red" : "")
     }));
+    addTooltip(treeNode, {
+        display: createResourceTooltip(life),
+        pinnable: true
+    });
 
     const resetButton = createResetButton(() => ({
         conversion,
         tree: main.tree,
         treeNode
     }));
+    addTooltip(resetButton, {
+        display: jsx(() =>
+            createModifierSection(
+                "Modifiers",
+                "",
+                conversion.gainModifier,
+                Decimal.floor(conversion.scaling.currentGain(conversion))
+            )
+        ),
+        pinnable: true,
+        direction: TooltipDirection.DOWN,
+        style: "width: 400px; text-align: left"
+    });
 
     return {
         id,

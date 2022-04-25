@@ -5,15 +5,14 @@ import {
     defaultResetPropagation,
     createTree,
     GenericTree,
-    GenericTreeNode,
-    branchedResetPropagation
+    GenericTreeNode
 } from "features/trees/tree";
 import { globalBus } from "game/events";
 import { createLayer, GenericLayer } from "game/layers";
 import player, { PlayerData } from "game/player";
 import Decimal, { DecimalSource, format, formatWhole, formatTime } from "util/bignum";
 import { render } from "util/vue";
-import { computed, toRaw } from "vue";
+import { computed, toRaw, unref } from "vue";
 import flame from "./layers/Flame";
 import life from "./layers/Life";
 import aqua from "./layers/Aqua";
@@ -23,8 +22,39 @@ import cryo from "./layers/Cryo";
 import air from "./layers/Air";
 import earth from "./layers/Earth";
 
+const oneWayBranchedResetPropagation = function (
+    tree: GenericTree,
+    resettingNode: GenericTreeNode
+): void {
+    const visitedNodes = [resettingNode];
+    let currentNodes = [resettingNode];
+    if (tree.branches != null) {
+        const branches = unref(tree.branches);
+        while (currentNodes.length > 0) {
+            const nextNodes: GenericTreeNode[] = [];
+            currentNodes.forEach(node => {
+                branches
+                    .filter(branch => branch.startNode === node)
+                    .map(branch => branch.endNode)
+                    .filter(node => !visitedNodes.includes(node))
+                    .forEach(node => {
+                        // Check here instead of in the filter because this check's results may
+                        // change as we go through each node
+                        if (!nextNodes.includes(node)) {
+                            nextNodes.push(node);
+                            node.reset?.reset();
+                        }
+                    });
+            });
+            currentNodes = nextNodes;
+            visitedNodes.push(...currentNodes);
+        }
+    }
+};
+
 const customResetPropagation = function (tree: GenericTree, resettingNode: GenericTreeNode): void {
-    if (advancements.milestones[12].earned.value) branchedResetPropagation(tree, resettingNode);
+    if (advancements.milestones[12].earned.value)
+        oneWayBranchedResetPropagation(tree, resettingNode);
     else defaultResetPropagation(tree, resettingNode);
 };
 
@@ -94,22 +124,22 @@ export const main = createLayer("main", () => {
 
                 if (cryo.treeNode.visibility.value == Visibility.Visible) {
                     b.push({
-                        startNode: aqua.treeNode,
-                        endNode: cryo.treeNode
+                        startNode: cryo.treeNode,
+                        endNode: aqua.treeNode
                     });
                 }
 
                 if (air.treeNode.visibility.value == Visibility.Visible) {
                     b.push({
-                        startNode: life.treeNode,
-                        endNode: air.treeNode
+                        startNode: air.treeNode,
+                        endNode: life.treeNode
                     });
                 }
 
                 if (earth.treeNode.visibility.value == Visibility.Visible) {
                     b.push({
-                        startNode: flame.treeNode,
-                        endNode: earth.treeNode
+                        startNode: earth.treeNode,
+                        endNode: flame.treeNode
                     });
                 }
 

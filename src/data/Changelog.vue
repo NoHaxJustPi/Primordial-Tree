@@ -45,6 +45,22 @@
                     </li>
                 </ul>
             </details>
+            <details>
+                <summary>v1.0.2 Tooltip Heaven - <time>2022-04-24</time></summary>
+                <ul>
+                    <li class="fix">Updated to Profectus v0.3.3</li>
+                    <li class="fix">Added tooltips to layer nodes (thanks to thepaperpilot)</li>
+                    <li class="fix">
+                        Added modifier tooltips to reset buttons (note that it's not in the Aqua
+                        layer, it doesn't let you click the reset button when it is, so I had to
+                        remove it for the time being while I try to figure that out)
+                    </li>
+                    <li class="fix">
+                        Fixed the way that the branched reset propagation works (I really borked
+                        that one up lol)
+                    </li>
+                </ul>
+            </details>
         </template>
     </Modal>
 </template>

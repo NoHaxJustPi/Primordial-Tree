@@ -3,7 +3,12 @@
  * @hidden
  */
 import { main } from "data/projEntry";
-import { createCumulativeConversion, createPolynomialScaling } from "features/conversion";
+import {
+    Conversion,
+    ConversionOptions,
+    createCumulativeConversion,
+    createPolynomialScaling
+} from "features/conversion";
 import { CoercableComponent, jsx, Visibility } from "features/feature";
 import { createReset } from "features/reset";
 import MainDisplay from "features/resources/MainDisplay.vue";
@@ -22,6 +27,14 @@ import lightning from "./Lightning";
 import cryo from "./Cryo";
 import earth from "./Earth";
 import { globalBus } from "game/events";
+import { createResourceTooltip } from "features/trees/tree";
+import { addTooltip, TooltipDirection } from "features/tooltips/tooltip";
+import {
+    createSequentialModifier,
+    createMultiplicativeModifier,
+    Modifier,
+    createModifierSection
+} from "game/modifiers";
 
 const layer = createLayer("f", () => {
     const id = "f";
@@ -34,35 +47,39 @@ const layer = createLayer("f", () => {
     const time = createResource<number>(0);
     const autoDone = createResource<boolean>(false);
 
-    const gainMult = computed(() => {
-        let mult = Decimal.dOne;
-
-        if (upgradesR2[1].bought.value) mult = mult.times(upgradeEffects[4].value);
-        if (lightning.lightningSel.value == 2)
-            mult = mult.times(lightning.clickableEffects[2].value);
-        if (
-            advancements.milestones[4].earned.value &&
-            Decimal.lte(time.value, advancements.adv5time.value)
-        )
-            mult = mult.times(3);
-        mult = mult.times(earth.flameMult.value);
-
-        return mult;
-    });
-
     const baseReq = computed(() => (cryo.challenges[0].active.value ? 1 / 0 : 10));
 
-    const conversion = createCumulativeConversion(() => ({
-        scaling: createPolynomialScaling(baseReq, 1 / 3),
-        baseResource: main.particles,
-        gainResource: flame,
-        roundUpCost: true,
-        gainModifier: {
-            apply: gain => Decimal.mul(gain, gainMult.value),
-            revert: gain => Decimal.div(gain, gainMult.value),
-            enabled: true
-        }
-    }));
+    const conversion: Conversion<ConversionOptions & { gainModifier: Required<Modifier> }> =
+        createCumulativeConversion(() => ({
+            scaling: createPolynomialScaling(baseReq, 1 / 3),
+            baseResource: main.particles,
+            gainResource: flame,
+            roundUpCost: true,
+            gainModifier: createSequentialModifier(
+                createMultiplicativeModifier(
+                    upgradeEffects[4],
+                    "Flame Upgrade 4",
+                    upgradesR2[1].bought
+                ),
+                createMultiplicativeModifier(
+                    lightning.clickableEffects[2],
+                    "Lightning Option 3",
+                    () => lightning.lightningSel.value == 2
+                ),
+                createMultiplicativeModifier(
+                    3,
+                    "Advancement 5",
+                    () =>
+                        advancements.milestones[4].earned.value &&
+                        Decimal.lte(time.value, advancements.adv5time.value)
+                ),
+                createMultiplicativeModifier(
+                    earth.flameMult,
+                    "Earth Grid Boost 1",
+                    advancements.milestones[11].earned
+                )
+            )
+        }));
 
     globalBus.on("update", diff => {
         if (advancements.milestones[3].earned.value)
@@ -251,12 +268,29 @@ const layer = createLayer("f", () => {
                 ? "red"
                 : ""
     }));
+    addTooltip(treeNode, {
+        display: createResourceTooltip(flame),
+        pinnable: true
+    });
 
     const resetButton = createResetButton(() => ({
         conversion,
         tree: main.tree,
         treeNode
     }));
+    addTooltip(resetButton, {
+        display: jsx(() =>
+            createModifierSection(
+                "Modifiers",
+                "",
+                conversion.gainModifier,
+                Decimal.floor(conversion.scaling.currentGain(conversion))
+            )
+        ),
+        pinnable: true,
+        direction: TooltipDirection.DOWN,
+        style: "width: 400px; text-align: left"
+    });
 
     return {
         id,

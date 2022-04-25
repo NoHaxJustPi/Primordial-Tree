@@ -19,6 +19,8 @@ import { computed, unref } from "vue";
 import flame from "./Flame";
 import life from "./Life";
 import aqua from "./Aqua";
+import { addTooltip } from "features/tooltips/tooltip";
+import { createResourceTooltip } from "features/trees/tree";
 
 const layer = createLayer("c", () => {
     const id = "c";
@@ -191,6 +193,11 @@ const layer = createLayer("c", () => {
         reset,
         glowColor: () => (challenges.some(c => c.canComplete.value) ? "red" : "")
     }));
+    addTooltip(treeNode, {
+        display: createResourceTooltip(cryo),
+        pinnable: true,
+        style: () => (treeNode.visibility.value === Visibility.Visible ? "" : "display: none")
+    });
 
     const resetButton = createResetButton(() => ({
         conversion,
