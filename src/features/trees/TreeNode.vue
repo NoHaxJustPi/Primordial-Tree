@@ -7,15 +7,15 @@
             can: unref(canClick),
             ...unref(classes)
         }"
+        @click="onClick"
+        @mousedown="start"
+        @mouseleave="stop"
+        @mouseup="stop"
+        @touchstart.passive="start"
+        @touchend.passive="stop"
+        @touchcancel.passive="stop"
     >
         <div
-            @click="onClick"
-            @mousedown="start"
-            @mouseleave="stop"
-            @mouseup="stop"
-            @touchstart="start"
-            @touchend="stop"
-            @touchcancel="stop"
             :style="[
                 {
                     backgroundColor: unref(color),

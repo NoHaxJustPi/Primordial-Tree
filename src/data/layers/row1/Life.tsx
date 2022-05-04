@@ -16,20 +16,22 @@ import { createResource, Resource, trackBest } from "features/resources/resource
 import { createLayer } from "game/layers";
 import Decimal, { DecimalSource, formatWhole } from "util/bignum";
 import { render } from "util/vue";
-import { createLayerTreeNode, createResetButton } from "../common";
+import { createLayerTreeNode, createResetButton } from "../../common";
 import { createBuyable, Buyable, BuyableDisplay } from "features/buyable";
 import { computed, ComputedRef, unref } from "vue";
 import { format } from "util/break_eternity";
 import { Computable } from "util/computed";
-import advancements from "./Advancements";
+import advancements from "../Advancements";
 import flame from "./Flame";
-import lightning from "./Lightning";
-import cryo from "./Cryo";
-import air from "./Air";
-import earth from "./Earth";
+import lightning from "../row2/Lightning";
+import cryo from "../row2/Cryo";
+import air from "../row2/Air";
+import earth from "../row2/Earth";
+import combinators from "../row3/Combinators";
 import { globalBus } from "game/events";
 import { createClickable } from "features/clickables/clickable";
-import { addTooltip, TooltipDirection } from "features/tooltips/tooltip";
+import { addTooltip } from "features/tooltips/tooltip";
+import { Direction } from "util/common";
 import { createResourceTooltip } from "features/trees/tree";
 import {
     createModifierSection,
@@ -47,6 +49,7 @@ const layer = createLayer("l", () => {
     const best = trackBest(life);
 
     const time = createResource<number>(0);
+    const autoTime = createResource<number>(0);
 
     const baseReq = computed(() => {
         let base = 10;
@@ -54,22 +57,6 @@ const layer = createLayer("l", () => {
         if (cryo.challenges[1].active.value) base = 1 / 0;
 
         return base;
-    });
-
-    const gainMult = computed(() => {
-        let mult = Decimal.dOne;
-
-        if (lightning.lightningSel.value == 2)
-            mult = mult.times(lightning.clickableEffects[2].value);
-        if (
-            advancements.milestones[4].earned.value &&
-            Decimal.lte(time.value, advancements.adv5time.value)
-        )
-            mult = mult.times(3);
-        mult = mult.times(buyableEffects[3].value);
-        mult = mult.times(air.windEff.value);
-
-        return mult;
     });
 
     const conversion: Conversion<ConversionOptions & { gainModifier: Required<Modifier> }> =
@@ -86,8 +73,8 @@ const layer = createLayer("l", () => {
                 ),
                 createMultiplicativeModifier(
                     lightning.clickableEffects[2],
-                    "Lightning Option 3",
-                    () => lightning.lightningSel.value == 2
+                    "Lightning Mode C",
+                    () => lightning.lightningSel[2].value
                 ),
                 createMultiplicativeModifier(
                     3,
@@ -108,6 +95,21 @@ const layer = createLayer("l", () => {
         if (advancements.milestones[3].earned.value)
             life.value = Decimal.mul(conversion.currentGain.value, diff).plus(life.value);
         time.value += diff;
+        autoTime.value += diff;
+
+        if (advancements.milestones[16].earned.value && autoTime.value >= 1) {
+            autoTime.value = 0;
+            buyAll.onClick(undefined);
+        }
+    });
+
+    const buyablePower = computed(() => {
+        let power: DecimalSource = 1;
+
+        if (Decimal.gte(combinators.best.value, 2))
+            power = combinators.multiBuyableEffects[2].value;
+
+        return power;
     });
 
     const extraBuyableLevelsAll = computed(() => {
@@ -130,23 +132,51 @@ const layer = createLayer("l", () => {
     ];
 
     const buyableEffects = {
-        0: computed(() => Decimal.add(buyables[0].amount.value, extraBuyableLevels[0].value)),
+        0: computed(() =>
+            Decimal.add(buyables[0].amount.value, extraBuyableLevels[0].value).times(
+                buyablePower.value
+            )
+        ),
         1: computed(() =>
-            Decimal.pow(2, Decimal.add(buyables[1].amount.value, extraBuyableLevels[1].value))
+            Decimal.pow(
+                2,
+                Decimal.add(buyables[1].amount.value, extraBuyableLevels[1].value).times(
+                    buyablePower.value
+                )
+            )
         ),
         2: computed(() =>
-            Decimal.mul(2, Decimal.add(buyables[2].amount.value, extraBuyableLevels[2].value))
+            Decimal.mul(
+                2,
+                Decimal.add(buyables[2].amount.value, extraBuyableLevels[2].value).times(
+                    buyablePower.value
+                )
+            )
         ),
         3: computed(() =>
-            Decimal.pow(1.15, Decimal.add(buyables[3].amount.value, extraBuyableLevels[3].value))
+            Decimal.pow(
+                1.15,
+                Decimal.add(buyables[3].amount.value, extraBuyableLevels[3].value).times(
+                    buyablePower.value
+                )
+            )
         ),
         4: computed(() =>
-            Decimal.pow(2.25, Decimal.add(buyables[4].amount.value, extraBuyableLevels[4].value))
+            Decimal.pow(
+                2.25,
+                Decimal.add(buyables[4].amount.value, extraBuyableLevels[4].value).times(
+                    buyablePower.value
+                )
+            )
         ),
         5: computed(() =>
             Decimal.add(main.particleGain.value, 1)
                 .log10()
-                .times(Decimal.add(buyables[5].amount.value, extraBuyableLevels[5].value))
+                .times(
+                    Decimal.add(buyables[5].amount.value, extraBuyableLevels[5].value).times(
+                        buyablePower.value
+                    )
+                )
                 .plus(1)
                 .log10()
                 .div(5)
@@ -326,11 +356,11 @@ const layer = createLayer("l", () => {
                 "Modifiers",
                 "",
                 conversion.gainModifier,
-                Decimal.floor(conversion.scaling.currentGain(conversion))
+                conversion.scaling.currentGain(conversion)
             )
         ),
         pinnable: true,
-        direction: TooltipDirection.DOWN,
+        direction: Direction.Down,
         style: "width: 400px; text-align: left"
     });
 
@@ -341,6 +371,7 @@ const layer = createLayer("l", () => {
         life,
         best,
         time,
+        autoTime,
         buyableEffects,
         display: jsx(() => (
             <>
@@ -348,6 +379,9 @@ const layer = createLayer("l", () => {
                 {render(resetButton)}
                 <br />
                 <br />
+                <div v-show={Decimal.gt(buyablePower.value, 1)}>
+                    <b>Buyable Power: {format(Decimal.mul(buyablePower.value, 100))}%</b>
+                </div>
                 {render(buyAll)}
                 <table>
                     <tbody>

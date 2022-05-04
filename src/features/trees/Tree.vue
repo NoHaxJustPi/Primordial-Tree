@@ -76,10 +76,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.row {
-    margin: 50px auto;
-}
-
 .left-side-nodes {
     position: absolute;
     left: 15px;

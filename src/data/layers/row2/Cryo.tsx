@@ -10,17 +10,24 @@ import { createResource, Resource, trackBest } from "features/resources/resource
 import { createLayer } from "game/layers";
 import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
 import { render } from "util/vue";
-import { createLayerTreeNode, createResetButton } from "../common";
-import advancements from "./Advancements";
+import { createLayerTreeNode, createResetButton } from "../../common";
+import advancements from "../Advancements";
 import { main } from "data/projEntry";
 import { Challenge, createChallenge } from "features/challenges/challenge";
 import { Computable } from "util/computed";
 import { computed, unref } from "vue";
-import flame from "./Flame";
-import life from "./Life";
-import aqua from "./Aqua";
+import flame from "../row1/Flame";
+import life from "../row1/Life";
+import aqua from "../row1/Aqua";
 import { addTooltip } from "features/tooltips/tooltip";
+import { Direction } from "util/common";
 import { createResourceTooltip } from "features/trees/tree";
+import combinators from "../row3/Combinators";
+import {
+    createSequentialModifier,
+    createMultiplicativeModifier,
+    createModifierSection
+} from "game/modifiers";
 
 const layer = createLayer("c", () => {
     const id = "c";
@@ -34,7 +41,14 @@ const layer = createLayer("c", () => {
         scaling: createPolynomialScaling(1e3, 3 / 4),
         baseResource: aqua.aqua,
         gainResource: cryo,
-        roundUpCost: true
+        roundUpCost: true,
+        gainModifier: createSequentialModifier(
+            createMultiplicativeModifier(
+                combinators.mainEff,
+                "Particle Combinator Effect",
+                advancements.milestones[15].earned
+            )
+        )
     }));
 
     const challenge1Data = {
@@ -172,7 +186,8 @@ const layer = createLayer("c", () => {
     ];
 
     const challengeReset = createReset(() => ({
-        thingsToReset: (): Record<string, unknown>[] => [flame, life, aqua],
+        thingsToReset: (): Record<string, unknown>[] =>
+            advancements.milestones[15].earned.value ? [aqua] : [flame, life, aqua],
         onReset() {
             main.particles.value = 10;
             main.best.value = main.particles.value;
@@ -204,6 +219,19 @@ const layer = createLayer("c", () => {
         tree: main.tree,
         treeNode
     }));
+    addTooltip(resetButton, {
+        display: jsx(() =>
+            createModifierSection(
+                "Modifiers",
+                "",
+                conversion.gainModifier!,
+                conversion.scaling.currentGain(conversion)
+            )
+        ),
+        pinnable: true,
+        direction: Direction.Down,
+        style: "width: 400px; text-align: left"
+    });
 
     return {
         id,

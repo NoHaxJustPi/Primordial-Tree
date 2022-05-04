@@ -13,44 +13,16 @@ import player, { PlayerData } from "game/player";
 import Decimal, { DecimalSource, format, formatWhole, formatTime } from "util/bignum";
 import { render } from "util/vue";
 import { computed, toRaw, unref } from "vue";
-import flame from "./layers/Flame";
-import life from "./layers/Life";
-import aqua from "./layers/Aqua";
+import flame from "./layers/row1/Flame";
+import life from "./layers/row1/Life";
+import aqua from "./layers/row1/Aqua";
 import advancements from "./layers/Advancements";
-import lightning from "./layers/Lightning";
-import cryo from "./layers/Cryo";
-import air from "./layers/Air";
-import earth from "./layers/Earth";
-
-const oneWayBranchedResetPropagation = function (
-    tree: GenericTree,
-    resettingNode: GenericTreeNode
-): void {
-    const visitedNodes = [resettingNode];
-    let currentNodes = [resettingNode];
-    if (tree.branches != null) {
-        const branches = unref(tree.branches);
-        while (currentNodes.length > 0) {
-            const nextNodes: GenericTreeNode[] = [];
-            currentNodes.forEach(node => {
-                branches
-                    .filter(branch => branch.startNode === node)
-                    .map(branch => branch.endNode)
-                    .filter(node => !visitedNodes.includes(node))
-                    .forEach(node => {
-                        // Check here instead of in the filter because this check's results may
-                        // change as we go through each node
-                        if (!nextNodes.includes(node)) {
-                            nextNodes.push(node);
-                            node.reset?.reset();
-                        }
-                    });
-            });
-            currentNodes = nextNodes;
-            visitedNodes.push(...currentNodes);
-        }
-    }
-};
+import lightning from "./layers/row2/Lightning";
+import cryo from "./layers/row2/Cryo";
+import air from "./layers/row2/Air";
+import earth from "./layers/row2/Earth";
+import { oneWayBranchedResetPropagation, versionGT, fixPoint4Obj } from "./helpers";
+import combinators from "./layers/row3/Combinators";
 
 const customResetPropagation = function (tree: GenericTree, resettingNode: GenericTreeNode): void {
     if (advancements.milestones[12].earned.value)
@@ -73,9 +45,9 @@ export const main = createLayer("main", () => {
         if (flame.upgradesR2[2].bought.value) gain = gain.plus(flame.upgradeEffects[5].value);
         gain = gain.plus(life.buyableEffects[0].value);
         gain = gain.plus(Decimal.floor(aqua.bubbles.value));
-        if (lightning.lightningSel.value == 0)
-            gain = gain.plus(lightning.clickableEffects[0].value);
+        if (lightning.lightningSel[0].value) gain = gain.plus(lightning.clickableEffects[0].value);
         gain = gain.plus(earth.baseGainAdded.value);
+        gain = gain.plus(combinators.multiBuyableEffects[0].value);
 
         return gain;
     });
@@ -84,6 +56,9 @@ export const main = createLayer("main", () => {
         let exp = Decimal.dOne;
 
         exp = exp.times(air.tornadoEff.value);
+
+        if (advancements.milestones[19].earned.value)
+            exp = exp.plus(Decimal.mul(0.05, Decimal.floor(aqua.floods.value)));
 
         return exp;
     });
@@ -94,14 +69,17 @@ export const main = createLayer("main", () => {
 
         if (flame.upgradesR1[1].bought.value) gain = gain.times(flame.upgradeEffects[1].value);
         gain = gain.times(life.buyableEffects[1].value);
-        if (lightning.lightningSel.value == 1)
-            gain = gain.times(lightning.clickableEffects[1].value);
-        if (lightning.lightningSel.value == 3)
-            gain = gain.times(lightning.clickableEffects[3].value);
+        if (lightning.lightningSel[1].value) gain = gain.times(lightning.clickableEffects[1].value);
+        if (lightning.lightningSel[3].value) gain = gain.times(lightning.clickableEffects[3].value);
         if (advancements.milestones[7].earned.value)
             gain = gain.times(
                 Decimal.pow(aqua.torrentEff.value.plus(1), Decimal.floor(aqua.torrents.value))
             );
+        if (
+            Decimal.gte(combinators.multiBuyables[1].value, 1) &&
+            advancements.milestones[15].earned.value
+        )
+            gain = gain.times(combinators.multiBuyableEffects[1].value);
 
         return gain;
     });
@@ -112,11 +90,11 @@ export const main = createLayer("main", () => {
     const oomps = trackOOMPS(particles, particleGain);
 
     const tree = createTree(() => {
-        const row1 = [flame.treeNode, life.treeNode, aqua.treeNode];
         return {
             nodes: [
                 [flame.treeNode, life.treeNode, aqua.treeNode],
-                [earth.treeNode, lightning.treeNode, air.treeNode, cryo.treeNode]
+                [earth.treeNode, lightning.treeNode, air.treeNode, cryo.treeNode],
+                [combinators.treeNode]
             ],
             leftSideNodes: [advancements.treeNode],
             branches: () => {
@@ -143,10 +121,31 @@ export const main = createLayer("main", () => {
                     });
                 }
 
+                if (combinators.treeNode.visibility.value == Visibility.Visible) {
+                    b.push({
+                        startNode: combinators.treeNode,
+                        endNode: earth.treeNode
+                    });
+                    b.push({
+                        startNode: combinators.treeNode,
+                        endNode: lightning.treeNode
+                    });
+                    b.push({
+                        startNode: combinators.treeNode,
+                        endNode: air.treeNode
+                    });
+                    b.push({
+                        startNode: combinators.treeNode,
+                        endNode: cryo.treeNode
+                    });
+                }
+
                 return b;
             },
             onReset() {
-                particles.value = row1.some(tn => toRaw(this.resettingNode.value) === toRaw(tn))
+                particles.value = [flame.treeNode, life.treeNode, aqua.treeNode].some(
+                    tn => toRaw(this.resettingNode.value) === toRaw(tn)
+                )
                     ? 0
                     : 10;
                 best.value = particles.value;
@@ -204,16 +203,66 @@ export const main = createLayer("main", () => {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<PlayerData>
-): Array<GenericLayer> => [main, flame, life, aqua, advancements, lightning, cryo, air, earth];
+): Array<GenericLayer> => [
+    main,
+    flame,
+    life,
+    aqua,
+    advancements,
+    lightning,
+    cryo,
+    air,
+    earth,
+    combinators
+];
 
 export const hasWon = computed(() => {
-    return Decimal.gte(main.particleGain.value, 3e9);
+    return Decimal.gte(main.particleGain.value, 1 / 0);
 });
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+export function fixOldSaveEarly(
+    oldVersion: string | undefined,
+    player: Partial<PlayerData>
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+): void {
+    if (versionGT("1.1", oldVersion)) {
+        if (
+            player?.layers?.li?.lightningSel !== undefined &&
+            typeof player.layers.li.lightningSel == typeof Number
+        ) {
+            player.layers.li.lightningSel = {
+                0: player.layers.li.lightningSel == 0,
+                1: player.layers.li.lightningSel == 1,
+                2: player.layers.li.lightningSel == 2,
+                3: player.layers.li.lightningSel == 3
+            };
+        }
+
+        if (player?.layers?.f?.upgradesR1 !== undefined)
+            player.layers.f.upgradesR1 = fixPoint4Obj(player.layers.f.upgradesR1);
+
+        if (player?.layers?.f?.upgradesR2 !== undefined)
+            player.layers.f.upgradesR2 = fixPoint4Obj(player.layers.f.upgradesR2);
+
+        if (player?.layers?.l?.buyables !== undefined)
+            player.layers.l.buyables = fixPoint4Obj(player.layers.l.buyables);
+
+        if (player?.layers?.e?.grid !== undefined)
+            player.layers.e.grid = fixPoint4Obj(player.layers.e.grid);
+
+        if (player?.layers?.adv?.milestones !== undefined)
+            player.layers.adv.milestones = fixPoint4Obj(player.layers.adv.milestones);
+    }
+}
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export function fixOldSave(
     oldVersion: string | undefined,
     player: Partial<PlayerData>
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-): void {}
+): void {
+    player.modVersion = "1.1";
+}
 /* eslint-enable @typescript-eslint/no-unused-vars */

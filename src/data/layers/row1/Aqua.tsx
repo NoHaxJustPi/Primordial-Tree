@@ -11,24 +11,22 @@ import { createResource, trackBest } from "features/resources/resource";
 import { createLayer } from "game/layers";
 import Decimal, { DecimalSource } from "util/bignum";
 import { render } from "util/vue";
-import { createLayerTreeNode, createResetButton } from "../common";
-import { createBar, Direction } from "features/bars/bar";
+import { createLayerTreeNode, createResetButton } from "../../common";
+import { createBar } from "features/bars/bar";
 import { formatWhole } from "util/break_eternity";
 import { computed } from "vue";
 import { globalBus } from "game/events";
 import flame from "./Flame";
 import life from "./Life";
-import advancements from "./Advancements";
-import lightning from "./Lightning";
-import cryo from "./Cryo";
-import earth from "./Earth";
-import { addTooltip, TooltipDirection } from "features/tooltips/tooltip";
+import advancements from "../Advancements";
+import lightning from "../row2/Lightning";
+import cryo from "../row2/Cryo";
+import earth from "../row2/Earth";
+import { addTooltip } from "features/tooltips/tooltip";
+import { Direction } from "util/common";
 import { createResourceTooltip } from "features/trees/tree";
-import {
-    createModifierSection,
-    createMultiplicativeModifier,
-    createSequentialModifier
-} from "game/modifiers";
+import { createMultiplicativeModifier, createSequentialModifier } from "game/modifiers";
+import combinators from "../row3/Combinators";
 
 const layer = createLayer("a", () => {
     const id = "a";
@@ -71,6 +69,11 @@ const layer = createLayer("a", () => {
         return eff;
     });
 
+    const floodTime = createResource<DecimalSource>(0);
+    const floods = computed(() => {
+        return Decimal.log10(Decimal.add(floodTime.value, 1));
+    });
+
     globalBus.on("update", diff => {
         bubbleTime.value = Decimal.add(
             bubbleTime.value,
@@ -85,6 +88,13 @@ const layer = createLayer("a", () => {
             torrentTime.value = Decimal.add(
                 torrentTime.value,
                 Decimal.mul(Decimal.floor(waveTime.value), diff / 2e6).times(aquaBarSpeed.value)
+            );
+        }
+
+        if (advancements.milestones[19].earned.value) {
+            floodTime.value = Decimal.add(
+                floodTime.value,
+                Decimal.mul(Decimal.floor(torrentTime.value), diff / 1e10).times(aquaBarSpeed.value)
             );
         }
 
@@ -115,8 +125,8 @@ const layer = createLayer("a", () => {
         gainModifier: createSequentialModifier(
             createMultiplicativeModifier(
                 lightning.clickableEffects[2],
-                "Lightning Option 3",
-                () => lightning.lightningSel.value == 2
+                "Lightning Mode C",
+                () => lightning.lightningSel[2].value
             ),
             createMultiplicativeModifier(
                 3,
@@ -124,6 +134,13 @@ const layer = createLayer("a", () => {
                 () =>
                     advancements.milestones[4].earned.value &&
                     Decimal.lte(time.value, advancements.adv5time.value)
+            ),
+            createMultiplicativeModifier(
+                combinators.multiBuyableEffects[1].value,
+                "Mud Molecule",
+                () =>
+                    Decimal.gte(combinators.multiBuyables[1].value, 1) &&
+                    advancements.milestones[15].earned.value
             )
         )
     }));
@@ -161,6 +178,12 @@ const layer = createLayer("a", () => {
         direction: Direction.Right,
         progress: () => Decimal.sub(torrents.value, Decimal.floor(torrents.value))
     }));
+    const floodBar = createBar(() => ({
+        width: 300,
+        height: 25,
+        direction: Direction.Right,
+        progress: () => Decimal.sub(floods.value, Decimal.floor(floods.value))
+    }));
 
     const reset = createReset(() => ({
         thingsToReset: (): Record<string, unknown>[] => [layer]
@@ -183,11 +206,11 @@ const layer = createLayer("a", () => {
         treeNode
     }));
     /*addTooltip(resetButton, {
-        display: jsx(() => createModifierSection("Modifiers", "", conversion.gainModifier, Decimal.floor(conversion.scaling.currentGain(conversion)))),
+        display: jsx(() => createModifierSection("Modifiers", "", conversion.gainModifier, conversion.scaling.currentGain(conversion))),
         pinnable: true,
-        direction: TooltipDirection.DOWN,
+        direction: Direction.Down,
         style: "width: 400px; text-align: left"
-    });*/ // you can't click the layer for some reason when this is active
+    });*/ // button can't be clicked when tooltip is added
 
     return {
         id,
@@ -203,54 +226,45 @@ const layer = createLayer("a", () => {
         torrentTime,
         torrents,
         torrentEff,
-        display: jsx(() => {
-            const bubbleDiv = Decimal.gt(best.value, 0) ? (
-                <>
-                    {formatWhole(Decimal.floor(bubbles.value))} Bubbles, each generating 1
-                    Particle/second
+        floodTime,
+        floods,
+        display: jsx(() => (
+            <>
+                <MainDisplay resource={aqua} color={color} />
+                {render(resetButton)}
+                <br />
+                <br />
+                <div>
+                    <div v-show={Decimal.gt(best.value, 0)}>
+                        {formatWhole(Decimal.floor(bubbles.value))} Bubbles, each generating 1
+                        Particle/second
+                        <br />
+                        {render(bubbleBar)}
+                    </div>
                     <br />
-                    {render(bubbleBar)}
-                </>
-            ) : (
-                <div />
-            );
-
-            const waveDiv = Decimal.gte(bubbles.value, 1) ? (
-                <>
-                    {formatWhole(Decimal.floor(waves.value))} Waves, each halving the Aqua Particle
-                    cost
+                    <div v-show={Decimal.gte(bubbles.value, 1)}>
+                        {formatWhole(Decimal.floor(waves.value))} Waves, each halving the Aqua
+                        Particle cost
+                        <br />
+                        {render(waveBar)}
+                    </div>
                     <br />
-                    {render(waveBar)}
-                </>
-            ) : (
-                <div />
-            );
-
-            const torrentDiv = advancements.milestones[7].earned.value ? (
-                <>
-                    {formatWhole(Decimal.floor(torrents.value))} Torrents, each increasing Point
-                    gain by {formatWhole(Decimal.mul(torrentEff.value, 100))}%
+                    <div v-show={advancements.milestones[7].earned.value}>
+                        {formatWhole(Decimal.floor(torrents.value))} Torrents, each increasing
+                        Particle gain by {formatWhole(Decimal.mul(torrentEff.value, 100))}%
+                        <br />
+                        {render(torrentBar)}
+                    </div>
                     <br />
-                    {render(torrentBar)}
-                </>
-            ) : (
-                <div />
-            );
-
-            return (
-                <>
-                    <MainDisplay resource={aqua} color={color} />
-                    {render(resetButton)}
-                    <br />
-                    <br />
-                    {bubbleDiv}
-                    <br />
-                    {waveDiv}
-                    <br />
-                    {torrentDiv}
-                </>
-            );
-        }),
+                    <div v-show={advancements.milestones[19].earned.value}>
+                        {formatWhole(Decimal.floor(floods.value))} Floods, each increasing the Base
+                        Particle gain exponent by 0.05
+                        <br />
+                        {render(floodBar)}
+                    </div>
+                </div>
+            </>
+        )),
         treeNode
     };
 });

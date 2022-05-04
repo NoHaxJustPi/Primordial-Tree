@@ -4,44 +4,16 @@
             <h2>Changelog</h2>
         </template>
         <template v-slot:body>
-            <details open>
-                <summary>v0.1 Basic Mechanics - <time>2022-04-08</time></summary>
-                <ul>
-                    <li class="feature">Implemented Flame, Life, & Water layers</li>
-                    <li class="feature">Implemented Advancement 1</li>
-                    <li class="feature">Implemented Lightning layer</li>
-                </ul>
-            </details>
-            <details open>
-                <summary>v0.2 Several Advancements - <time>2022-04-11</time></summary>
-                <ul>
-                    <li class="balancing">Balanced up to 43,000 Particles/s</li>
-                    <li class="feature">Implemented Advancements 2-6</li>
-                    <li class="feature">Implemented Cryo layer</li>
-                </ul>
-            </details>
             <details>
-                <summary>v0.3 Windseeker - <time>2022-04-14</time></summary>
+                <summary>v1.1 Particle Combinators - <time>2022-05-03</time></summary>
                 <ul>
-                    <li class="balancing">Balanced up to 40,500,000 Particles/s</li>
-                    <li class="feature">Implemented Advancements 7-11</li>
-                    <li class="feature">Implemented Air layer</li>
-                </ul>
-            </details>
-            <details>
-                <summary>v1.0 Our Planet - <time>2022-04-23</time></summary>
-                <ul>
-                    <li class="balancing">Balanced up to 3e9 Particles/s</li>
-                    <li class="feature">Implemented Advancements 11-15</li>
-                    <li class="feature">Implemented Earth layer</li>
-                </ul>
-            </details>
-            <details>
-                <summary>v1.0.1 Refined Edges - <time>2022-04-24</time></summary>
-                <ul>
-                    <li class="fix">Updated to Profectus v0.3.2</li>
-                    <li class="fix">
-                        Added glow color to certain layers (thanks to thepaperpilot)
+                    <li class="balancing">Balanced up to 1e14 Particles/s</li>
+                    <li class="feature">Implemented Advancements 16-21</li>
+                    <li class="feature">Implemented Particle Combinators</li>
+                    <li class="breaking">
+                        Updated to Profectus v0.4, which caused saves to glitch out a bit. Here is a
+                        list of everything that may have reset for you: Flame Upgrades, Life
+                        Buyables, and the Earth Grid (but not its level)
                     </li>
                 </ul>
             </details>
@@ -59,6 +31,47 @@
                         Fixed the way that the branched reset propagation works (I really borked
                         that one up lol)
                     </li>
+                </ul>
+            </details>
+            <details>
+                <summary>v1.0.1 Refined Edges - <time>2022-04-24</time></summary>
+                <ul>
+                    <li class="fix">Updated to Profectus v0.3.2</li>
+                    <li class="fix">
+                        Added glow color to certain layers (thanks to thepaperpilot)
+                    </li>
+                </ul>
+            </details>
+            <details>
+                <summary>v1.0 Our Planet - <time>2022-04-23</time></summary>
+                <ul>
+                    <li class="balancing">Balanced up to 3e9 Particles/s</li>
+                    <li class="feature">Implemented Advancements 11-15</li>
+                    <li class="feature">Implemented Earth layer</li>
+                </ul>
+            </details>
+            <details>
+                <summary>v0.3 Windseeker - <time>2022-04-14</time></summary>
+                <ul>
+                    <li class="balancing">Balanced up to 40,500,000 Particles/s</li>
+                    <li class="feature">Implemented Advancements 7-11</li>
+                    <li class="feature">Implemented Air layer</li>
+                </ul>
+            </details>
+            <details open>
+                <summary>v0.2 Several Advancements - <time>2022-04-11</time></summary>
+                <ul>
+                    <li class="balancing">Balanced up to 43,000 Particles/s</li>
+                    <li class="feature">Implemented Advancements 2-6</li>
+                    <li class="feature">Implemented Cryo layer</li>
+                </ul>
+            </details>
+            <details open>
+                <summary>v0.1 Basic Mechanics - <time>2022-04-08</time></summary>
+                <ul>
+                    <li class="feature">Implemented Flame, Life, & Water layers</li>
+                    <li class="feature">Implemented Advancement 1</li>
+                    <li class="feature">Implemented Lightning layer</li>
                 </ul>
             </details>
         </template>

@@ -16,19 +16,20 @@ import { createResource, displayResource, Resource, trackBest } from "features/r
 import { createLayer } from "game/layers";
 import Decimal, { DecimalSource } from "util/bignum";
 import { render } from "util/vue";
-import { createLayerTreeNode, createResetButton } from "../common";
+import { createLayerTreeNode, createResetButton } from "../../common";
 import { createUpgrade, Upgrade } from "features/upgrades/upgrade";
 import { Computable } from "util/computed";
 import { format, formatWhole } from "util/break_eternity";
 import { computed, unref } from "vue";
 import life from "./Life";
-import advancements from "./Advancements";
-import lightning from "./Lightning";
-import cryo from "./Cryo";
-import earth from "./Earth";
+import advancements from "../Advancements";
+import lightning from "../row2/Lightning";
+import cryo from "../row2/Cryo";
+import earth from "../row2/Earth";
 import { globalBus } from "game/events";
 import { createResourceTooltip } from "features/trees/tree";
-import { addTooltip, TooltipDirection } from "features/tooltips/tooltip";
+import { addTooltip } from "features/tooltips/tooltip";
+import { Direction } from "util/common";
 import {
     createSequentialModifier,
     createMultiplicativeModifier,
@@ -58,13 +59,13 @@ const layer = createLayer("f", () => {
             gainModifier: createSequentialModifier(
                 createMultiplicativeModifier(
                     upgradeEffects[4],
-                    "Flame Upgrade 4",
+                    "Flame Upgrade 5",
                     upgradesR2[1].bought
                 ),
                 createMultiplicativeModifier(
                     lightning.clickableEffects[2],
-                    "Lightning Option 3",
-                    () => lightning.lightningSel.value == 2
+                    "Lightning Mode C",
+                    () => lightning.lightningSel[2].value
                 ),
                 createMultiplicativeModifier(
                     3,
@@ -284,11 +285,11 @@ const layer = createLayer("f", () => {
                 "Modifiers",
                 "",
                 conversion.gainModifier,
-                Decimal.floor(conversion.scaling.currentGain(conversion))
+                conversion.scaling.currentGain(conversion)
             )
         ),
         pinnable: true,
-        direction: TooltipDirection.DOWN,
+        direction: Direction.Down,
         style: "width: 400px; text-align: left"
     });
 

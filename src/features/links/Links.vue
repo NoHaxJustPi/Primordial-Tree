@@ -43,9 +43,9 @@ function updateNodes() {
         isDirty = false;
         nextTick(() => {
             boundingRect.value = resizeListener.value?.getBoundingClientRect();
-            (Object.values(nodes.value) as FeatureNode[]).forEach(
-                node => (node.rect = node.element.getBoundingClientRect())
-            );
+            (Object.values(nodes.value) as FeatureNode[])
+                .filter(n => n) // Sometimes the values become undefined
+                .forEach(node => (node.rect = node.element.getBoundingClientRect()));
             isDirty = true;
         });
     }
@@ -61,7 +61,16 @@ const validLinks = computed(() => {
 </script>
 
 <style scoped>
-.resize-listener,
+.resize-listener {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    z-index: -10;
+    pointer-events: none;
+}
+
 svg {
     position: absolute;
     top: 0;

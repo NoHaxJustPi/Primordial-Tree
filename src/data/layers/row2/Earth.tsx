@@ -11,15 +11,22 @@ import { createReset } from "features/reset";
 import MainDisplay from "features/resources/MainDisplay.vue";
 import { createResource, trackBest } from "features/resources/resource";
 import { addTooltip } from "features/tooltips/tooltip";
+import { Direction } from "util/common";
 import { createResourceTooltip } from "features/trees/tree";
 import { createLayer } from "game/layers";
+import {
+    createSequentialModifier,
+    createMultiplicativeModifier,
+    createModifierSection
+} from "game/modifiers";
 import Decimal, { DecimalSource } from "lib/break_eternity";
 import { format, formatWhole } from "util/break_eternity";
 import { render } from "util/vue";
 import { computed } from "vue";
-import { main } from "../projEntry";
-import advancements from "./Advancements";
-import flame from "./Flame";
+import { main } from "../../projEntry";
+import advancements from "../Advancements";
+import flame from "../row1/Flame";
+import combinators from "../row3/Combinators";
 
 const layer = createLayer("e", () => {
     const id = "e";
@@ -92,7 +99,14 @@ const layer = createLayer("e", () => {
         scaling: createPolynomialScaling(1.5e5, 1 / 2),
         baseResource: flame.flame,
         gainResource: earth,
-        roundUpCost: true
+        roundUpCost: true,
+        gainModifier: createSequentialModifier(
+            createMultiplicativeModifier(
+                combinators.mainEff,
+                "Particle Combinator Effect",
+                advancements.milestones[15].earned
+            )
+        )
     }));
 
     const levelDown = createClickable(() => ({
@@ -174,6 +188,19 @@ const layer = createLayer("e", () => {
         tree: main.tree,
         treeNode
     }));
+    addTooltip(resetButton, {
+        display: jsx(() =>
+            createModifierSection(
+                "Modifiers",
+                "",
+                conversion.gainModifier!,
+                conversion.scaling.currentGain(conversion)
+            )
+        ),
+        pinnable: true,
+        direction: Direction.Down,
+        style: "width: 400px; text-align: left"
+    });
 
     return {
         id,

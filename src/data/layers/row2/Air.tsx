@@ -9,15 +9,23 @@ import { createReset } from "features/reset";
 import MainDisplay from "features/resources/MainDisplay.vue";
 import { createResource, Resource } from "features/resources/resource";
 import { addTooltip } from "features/tooltips/tooltip";
+import { Direction } from "util/common";
 import { createResourceTooltip } from "features/trees/tree";
 import { globalBus } from "game/events";
 import { createLayer } from "game/layers";
+import {
+    createSequentialModifier,
+    createMultiplicativeModifier,
+    Modifier,
+    createModifierSection
+} from "game/modifiers";
 import Decimal, { DecimalSource, format } from "util/bignum";
 import { render } from "util/vue";
 import { computed, unref } from "vue";
-import { createLayerTreeNode, createResetButton } from "../common";
-import advancements from "./Advancements";
-import life from "./Life";
+import { createLayerTreeNode, createResetButton } from "../../common";
+import advancements from "../Advancements";
+import life from "../row1/Life";
+import combinators from "../row3/Combinators";
 
 const layer = createLayer("ai", () => {
     const id = "ai";
@@ -80,6 +88,7 @@ const layer = createLayer("ai", () => {
         gainResource: Resource<DecimalSource>;
         buyMax: () => boolean;
         roundUpCost: true;
+        gainModifier: Required<Modifier>;
     }> = createCumulativeConversion(() => ({
         scaling: {
             currentGain: conv => {
@@ -121,7 +130,14 @@ const layer = createLayer("ai", () => {
         baseResource: life.life,
         gainResource: air,
         buyMax: () => advancements.milestones[10].earned.value,
-        roundUpCost: true
+        roundUpCost: true,
+        gainModifier: createSequentialModifier(
+            createMultiplicativeModifier(
+                combinators.mainEff,
+                "Particle Combinator Effect",
+                advancements.milestones[15].earned
+            )
+        )
     }));
 
     const reset = createReset(() => ({
@@ -147,6 +163,12 @@ const layer = createLayer("ai", () => {
         tree: main.tree,
         treeNode
     }));
+    /*addTooltip(resetButton, {
+        display: jsx(() => createModifierSection("Modifiers", "", conversion.gainModifier, conversion.scaling.currentGain(conversion))),
+        pinnable: true,
+        direction: Direction.Down,
+        style: "width: 400px; text-align: left"
+    });*/ // button can't be clicked when tooltip is added
 
     return {
         id,

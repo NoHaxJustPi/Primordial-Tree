@@ -1,6 +1,6 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
 import { Resource } from "features/resources/resource";
-import { Persistent, persistent } from "game/persistence";
+import { Persistent, PersistentState, persistent } from "game/persistence";
 import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
 import {
     Computable,
@@ -23,11 +23,11 @@ import {
     setDefault,
     StyleValue,
     Visibility
-} from "./feature";
+} from "features/feature";
 
-export const BuyableType = Symbol("Buyable");
+export const MultiBuyableType = Symbol("MultiBuyable");
 
-export type BuyableDisplay =
+export type MultiBuyableDisplay =
     | CoercableComponent
     | {
           title?: CoercableComponent;
@@ -35,40 +35,43 @@ export type BuyableDisplay =
           effectDisplay?: CoercableComponent;
       };
 
-export interface BuyableOptions {
+export interface MultiBuyableOptions {
     visibility?: Computable<Visibility>;
-    cost?: Computable<DecimalSource>;
-    resource?: Resource;
+    costSets: {
+        cost: Computable<DecimalSource>;
+        resource: Resource;
+    }[];
     canPurchase?: Computable<boolean>;
     purchaseLimit?: Computable<DecimalSource>;
     classes?: Computable<Record<string, boolean>>;
     style?: Computable<StyleValue>;
     mark?: Computable<boolean | string>;
     small?: Computable<boolean>;
-    display?: Computable<BuyableDisplay>;
-    onPurchase?: (cost: DecimalSource) => void;
+    display?: Computable<MultiBuyableDisplay>;
     keepRes?: Computable<boolean>;
 }
 
-export interface BaseBuyable {
+export interface BaseMultiBuyable extends Persistent<DecimalSource> {
     id: string;
-    amount: Persistent<DecimalSource>;
+    amount: Ref<DecimalSource>;
     maxed: Ref<boolean>;
     canAfford: Ref<boolean>;
     canClick: ProcessedComputable<boolean>;
     onClick: VoidFunction;
     purchase: VoidFunction;
-    type: typeof BuyableType;
+    type: typeof MultiBuyableType;
     [Component]: typeof ClickableComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
-export type Buyable<T extends BuyableOptions> = Replace<
-    T & BaseBuyable,
+export type MultiBuyable<T extends MultiBuyableOptions> = Replace<
+    T & BaseMultiBuyable,
     {
         visibility: GetComputableTypeWithDefault<T["visibility"], Visibility.Visible>;
-        cost: GetComputableType<T["cost"]>;
-        resource: GetComputableType<T["resource"]>;
+        costSets: {
+            cost: GetComputableType<T["costSets"][0]["cost"]>;
+            resource: GetComputableType<T["costSets"][0]["resource"]>;
+        }[];
         canPurchase: GetComputableTypeWithDefault<T["canPurchase"], Ref<boolean>>;
         purchaseLimit: GetComputableTypeWithDefault<T["purchaseLimit"], Decimal>;
         classes: GetComputableType<T["classes"]>;
@@ -79,8 +82,8 @@ export type Buyable<T extends BuyableOptions> = Replace<
     }
 >;
 
-export type GenericBuyable = Replace<
-    Buyable<BuyableOptions>,
+export type GenericMultiBuyable = Replace<
+    MultiBuyable<MultiBuyableOptions>,
     {
         visibility: ProcessedComputable<Visibility>;
         canPurchase: ProcessedComputable<boolean>;
@@ -88,57 +91,59 @@ export type GenericBuyable = Replace<
     }
 >;
 
-export function createBuyable<T extends BuyableOptions>(
-    optionsFunc: OptionsFunc<T, Buyable<T>, BaseBuyable>
-): Buyable<T> {
-    const amount = persistent<DecimalSource>(0);
-    return createLazyProxy(() => {
-        const buyable = optionsFunc();
+export function createMultiBuyable<T extends MultiBuyableOptions>(
+    optionsFunc: OptionsFunc<T, MultiBuyable<T>, BaseMultiBuyable>
+): MultiBuyable<T> {
+    return createLazyProxy(persistent => {
+        const buyable = Object.assign(persistent, optionsFunc());
 
-        if (buyable.canPurchase == null && (buyable.resource == null || buyable.cost == null)) {
+        if (buyable.canPurchase == null && buyable.costSets.length == 0) {
             console.warn(
-                "Cannot create buyable without a canPurchase property or a resource and cost property",
+                "Cannot create buyable without a canPurchase property or some element of costSets existing",
                 buyable
             );
-            throw "Cannot create buyable without a canPurchase property or a resource and cost property";
+            throw "Cannot create buyable without a canPurchase property or some element of costSets existing";
         }
 
-        buyable.id = getUniqueID("buyable-");
-        buyable.type = BuyableType;
+        buyable.id = getUniqueID("multibuyable-");
+        buyable.type = MultiBuyableType;
         buyable[Component] = ClickableComponent;
 
-        buyable.amount = amount;
+        buyable.amount = buyable[PersistentState];
         buyable.canAfford = computed(() => {
-            const genericBuyable = buyable as GenericBuyable;
-            const cost = unref(genericBuyable.cost);
-            return (
-                genericBuyable.resource != null &&
-                cost != null &&
-                Decimal.gte(genericBuyable.resource.value, cost)
-            );
+            const genericBuyable = buyable as GenericMultiBuyable;
+
+            for (let i = 0; i < genericBuyable.costSets.length; i++) {
+                const costSet = genericBuyable.costSets[i];
+                const cost = unref(costSet.cost);
+
+                if (Decimal.lt(costSet.resource.value, cost)) return false;
+            }
+
+            return true;
         });
         if (buyable.canPurchase == null) {
             buyable.canPurchase = computed(
                 () =>
-                    unref((buyable as GenericBuyable).visibility) === Visibility.Visible &&
-                    unref((buyable as GenericBuyable).canAfford) &&
+                    unref((buyable as GenericMultiBuyable).visibility) === Visibility.Visible &&
+                    unref((buyable as GenericMultiBuyable).canAfford) &&
                     Decimal.lt(
-                        (buyable as GenericBuyable).amount.value,
-                        unref((buyable as GenericBuyable).purchaseLimit)
+                        (buyable as GenericMultiBuyable).amount.value,
+                        unref((buyable as GenericMultiBuyable).purchaseLimit)
                     )
             );
         }
         buyable.maxed = computed(() =>
             Decimal.gte(
-                (buyable as GenericBuyable).amount.value,
-                unref((buyable as GenericBuyable).purchaseLimit)
+                (buyable as GenericMultiBuyable).amount.value,
+                unref((buyable as GenericMultiBuyable).purchaseLimit)
             )
         );
         processComputable(buyable as T, "classes");
         const classes = buyable.classes as ProcessedComputable<Record<string, boolean>> | undefined;
         buyable.classes = computed(() => {
             const currClasses = unref(classes) || {};
-            if ((buyable as GenericBuyable).maxed.value) {
+            if ((buyable as GenericMultiBuyable).maxed.value) {
                 currClasses.bought = true;
             }
             return currClasses;
@@ -151,31 +156,30 @@ export function createBuyable<T extends BuyableOptions>(
 
         buyable.canClick = buyable.canPurchase as ProcessedComputable<boolean>;
         buyable.onClick = buyable.purchase = function () {
-            const genericBuyable = buyable as GenericBuyable;
-            if (
-                !unref(genericBuyable.canPurchase) ||
-                genericBuyable.cost == null ||
-                genericBuyable.resource == null
-            ) {
+            const genericBuyable = buyable as GenericMultiBuyable;
+            if (!unref(genericBuyable.canPurchase) || genericBuyable.costSets.length == 0) {
                 return;
             }
-            const cost = unref(genericBuyable.cost);
-            if (!unref(keepRes))
-                genericBuyable.resource.value = Decimal.sub(genericBuyable.resource.value, cost);
+
+            for (let i = 0; i < genericBuyable.costSets.length; i++) {
+                const costSet = genericBuyable.costSets[i];
+                const cost = unref(costSet.cost);
+                if (!unref(keepRes))
+                    costSet.resource.value = Decimal.sub(costSet.resource.value, cost);
+            }
             genericBuyable.amount.value = Decimal.add(genericBuyable.amount.value, 1);
-            this.onPurchase?.(cost);
         };
         processComputable(buyable as T, "display");
         const display = buyable.display;
         buyable.display = jsx(() => {
             // TODO once processComputable types correctly, remove this "as X"
-            const currDisplay = unref(display) as BuyableDisplay;
+            const currDisplay = unref(display) as MultiBuyableDisplay;
             if (isCoercableComponent(currDisplay)) {
                 const CurrDisplay = coerceComponent(currDisplay);
                 return <CurrDisplay />;
             }
-            if (currDisplay != null && buyable.cost != null && buyable.resource != null) {
-                const genericBuyable = buyable as GenericBuyable;
+            if (currDisplay != null && buyable.costSets.length > 0) {
+                const genericBuyable = buyable as GenericMultiBuyable;
                 const Title = coerceComponent(currDisplay.title || "", "h3");
                 const Description = coerceComponent(currDisplay.description);
                 const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "");
@@ -188,6 +192,12 @@ export function createBuyable<T extends BuyableOptions>(
                             {formatWhole(unref(genericBuyable.purchaseLimit))}
                         </>
                     );
+                const costDisplay = genericBuyable.costSets.map(costSet => (
+                    <div>
+                        {format(unref(costSet.cost) || 0)} {costSet.resource.displayName}
+                        <br />
+                    </div>
+                ));
 
                 return (
                     <span>
@@ -207,11 +217,10 @@ export function createBuyable<T extends BuyableOptions>(
                                 Currently: <EffectDisplay />
                             </div>
                         ) : null}
-                        {genericBuyable.cost && !genericBuyable.maxed.value ? (
+                        {!genericBuyable.maxed.value ? (
                             <div>
                                 <br />
-                                Cost: {format(unref(genericBuyable.cost) || 0)}{" "}
-                                {buyable.resource.displayName}
+                                Cost: {costDisplay}
                             </div>
                         ) : null}
                     </span>
@@ -222,15 +231,17 @@ export function createBuyable<T extends BuyableOptions>(
 
         processComputable(buyable as T, "visibility");
         setDefault(buyable, "visibility", Visibility.Visible);
-        processComputable(buyable as T, "cost");
-        processComputable(buyable as T, "resource");
+        for (let i = 0; i < (buyable as T).costSets.length; i++) {
+            processComputable((buyable as T).costSets[i], "cost");
+            processComputable((buyable as T).costSets[i], "resource");
+        }
         processComputable(buyable as T, "purchaseLimit");
         setDefault(buyable, "purchaseLimit", Decimal.dInf);
         processComputable(buyable as T, "style");
         processComputable(buyable as T, "mark");
         processComputable(buyable as T, "small");
 
-        buyable[GatherProps] = function (this: GenericBuyable) {
+        buyable[GatherProps] = function (this: GenericMultiBuyable) {
             const { display, visibility, style, classes, onClick, canClick, small, mark, id } =
                 this;
             return {
@@ -246,6 +257,6 @@ export function createBuyable<T extends BuyableOptions>(
             };
         };
 
-        return buyable as unknown as Buyable<T>;
-    });
+        return buyable as unknown as MultiBuyable<T>;
+    }, persistent<DecimalSource>(0));
 }

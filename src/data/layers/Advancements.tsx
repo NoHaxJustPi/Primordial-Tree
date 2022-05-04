@@ -11,7 +11,8 @@ import { createMilestone } from "features/milestones/milestone";
 import { createReset } from "features/reset";
 import MainDisplay from "features/resources/MainDisplay.vue";
 import { createResource } from "features/resources/resource";
-import { addTooltip, TooltipDirection } from "features/tooltips/tooltip";
+import { addTooltip } from "features/tooltips/tooltip";
+import { Direction } from "util/common";
 import { createResourceTooltip } from "features/trees/tree";
 import { createLayer } from "game/layers";
 import Decimal, { DecimalSource } from "lib/break_eternity";
@@ -19,7 +20,7 @@ import { format } from "util/bignum";
 import { formatWhole } from "util/break_eternity";
 import { coerceComponent, render } from "util/vue";
 import { computed, ComputedRef } from "vue";
-import earth from "./Earth";
+import earth from "./row2/Earth";
 
 const layer = createLayer("adv", () => {
     const id = "adv";
@@ -42,6 +43,12 @@ const layer = createLayer("adv", () => {
         55555555,
         1e9,
         2.35e9,
+        3.25e9,
+        1e10,
+        2e10,
+        1.25e11,
+        2.5e13,
+        6e13,
         1 / 0
     ];
 
@@ -79,7 +86,7 @@ const layer = createLayer("adv", () => {
     addTooltip(treeNode, {
         display: createResourceTooltip(advancements),
         pinnable: true,
-        direction: TooltipDirection.RIGHT
+        direction: Direction.Right
     });
 
     const resetButton = createResetButton(() => ({
@@ -169,7 +176,16 @@ const layer = createLayer("adv", () => {
                     {format(adv15eff.value)}x)
                 </>
             ))
-        )
+        ),
+        createAdvancement(
+            16,
+            "Unlock Particle Combinators, gain 100% of Lightning Particle gain every second, and starting a Cryo Challenge only resets the Aqua layer."
+        ),
+        createAdvancement(17, "All Life Buyables are automatically purchased every second."),
+        createAdvancement(18, "The Spark Molecule effect is cubed."),
+        createAdvancement(19, "You can activate two Lightning Modes at once."),
+        createAdvancement(20, "Unlock a new Aqua Bar."),
+        createAdvancement(21, "Increase the Molecule limit by 20%.")
     ];
 
     return {
