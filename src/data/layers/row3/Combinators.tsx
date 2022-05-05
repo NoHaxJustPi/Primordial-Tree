@@ -14,7 +14,7 @@ import { createResourceTooltip } from "features/trees/tree";
 import { createLayer } from "game/layers";
 import Decimal, { DecimalSource } from "lib/break_eternity";
 import { render } from "util/vue";
-import advancements from "../Advancements";
+import advancements from "../side/Advancements";
 import MainDisplay from "features/resources/MainDisplay.vue";
 import { computed, ComputedRef } from "vue";
 import { format } from "util/bignum";
@@ -23,13 +23,14 @@ import lightning from "../row2/Lightning";
 import life from "../row1/Life";
 import aqua from "../row1/Aqua";
 import earth from "../row2/Earth";
+import air from "../row2/Air";
+import cryo from "../row2/Cryo";
 import {
     createMultiBuyable,
     MultiBuyable,
     MultiBuyableOptions
 } from "data/customFeatures/multiBuyable";
 import { Computable } from "util/computed";
-import { createClickable } from "features/clickables/clickable";
 
 const layer = createLayer("comb", () => {
     const id = "comb";
@@ -116,6 +117,15 @@ const layer = createLayer("comb", () => {
                 .log10()
                 .plus(1)
                 .sqrt()
+        ),
+        3: computed(() =>
+            Decimal.add(air.air.value, 1)
+                .log10()
+                .times(multiBuyables[3].amount.value)
+                .plus(1)
+                .log10()
+                .div(2)
+                .plus(1)
         )
     };
 
@@ -184,6 +194,30 @@ const layer = createLayer("comb", () => {
                 description: "Increase Life Buyable Power based on Combinators.",
                 effectDisplay:
                     "+" + format(Decimal.sub(multiBuyableEffects[2].value, 1).times(100)) + "%"
+            }),
+            purchaseLimit: moleculeLimit
+        })),
+        createMultiBuyable(() => ({
+            visibility: () => showIf(Decimal.gte(best.value, 3)),
+            costSets: [
+                {
+                    cost: 5e9,
+                    resource: aqua.aqua
+                },
+                {
+                    cost: 1e8,
+                    resource: cryo.cryo
+                },
+                {
+                    cost: 1e5,
+                    resource: air.air
+                }
+            ],
+            display: () => ({
+                title: "Snow Molecule",
+                description:
+                    'Boost the effect of the "Full Freeze" challenge based on Air Particles.',
+                effectDisplay: "^" + format(multiBuyableEffects[3].value)
             }),
             purchaseLimit: moleculeLimit
         }))

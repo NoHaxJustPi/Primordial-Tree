@@ -24,7 +24,7 @@ import { format, formatWhole } from "util/break_eternity";
 import { render } from "util/vue";
 import { computed } from "vue";
 import { main } from "../../projEntry";
-import advancements from "../Advancements";
+import advancements from "../side/Advancements";
 import flame from "../row1/Flame";
 import combinators from "../row3/Combinators";
 

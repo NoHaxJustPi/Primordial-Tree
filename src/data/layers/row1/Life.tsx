@@ -21,7 +21,7 @@ import { createBuyable, Buyable, BuyableDisplay } from "features/buyable";
 import { computed, ComputedRef, unref } from "vue";
 import { format } from "util/break_eternity";
 import { Computable } from "util/computed";
-import advancements from "../Advancements";
+import advancements from "../side/Advancements";
 import flame from "./Flame";
 import lightning from "../row2/Lightning";
 import cryo from "../row2/Cryo";

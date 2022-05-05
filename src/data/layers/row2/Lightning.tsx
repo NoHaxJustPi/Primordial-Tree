@@ -25,7 +25,7 @@ import { format } from "util/break_eternity";
 import { render } from "util/vue";
 import { computed } from "vue";
 import { createLayerTreeNode, createResetButton } from "../../common";
-import advancements from "../Advancements";
+import advancements from "../side/Advancements";
 import combinators from "../row3/Combinators";
 
 const layer = createLayer("li", () => {

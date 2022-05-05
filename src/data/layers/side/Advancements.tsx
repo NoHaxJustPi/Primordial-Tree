@@ -20,7 +20,7 @@ import { format } from "util/bignum";
 import { formatWhole } from "util/break_eternity";
 import { coerceComponent, render } from "util/vue";
 import { computed, ComputedRef } from "vue";
-import earth from "./row2/Earth";
+import earth from "../row2/Earth";
 
 const layer = createLayer("adv", () => {
     const id = "adv";
@@ -49,6 +49,8 @@ const layer = createLayer("adv", () => {
         1.25e11,
         2.5e13,
         6e13,
+        1e14,
+        5e14,
         1 / 0
     ];
 
@@ -185,7 +187,9 @@ const layer = createLayer("adv", () => {
         createAdvancement(18, "The Spark Molecule effect is cubed."),
         createAdvancement(19, "You can activate two Lightning Modes at once."),
         createAdvancement(20, "Unlock a new Aqua Bar."),
-        createAdvancement(21, "Increase the Molecule limit by 20%.")
+        createAdvancement(21, "Increase the Molecule limit by 20%."),
+        createAdvancement(22, "Gain 100% of Air Particle gain every second."),
+        createAdvancement(23, "Gain 100% of Cryo Particle gain every second.")
     ];
 
     return {

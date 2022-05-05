@@ -11,7 +11,7 @@ import { createLayer } from "game/layers";
 import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
 import { render } from "util/vue";
 import { createLayerTreeNode, createResetButton } from "../../common";
-import advancements from "../Advancements";
+import advancements from "../side/Advancements";
 import { main } from "data/projEntry";
 import { Challenge, createChallenge } from "features/challenges/challenge";
 import { Computable } from "util/computed";
@@ -28,6 +28,7 @@ import {
     createMultiplicativeModifier,
     createModifierSection
 } from "game/modifiers";
+import { globalBus } from "game/events";
 
 const layer = createLayer("c", () => {
     const id = "c";
@@ -51,6 +52,12 @@ const layer = createLayer("c", () => {
         )
     }));
 
+    globalBus.on("update", diff => {
+        if (advancements.milestones[22].earned.value) {
+            cryo.value = Decimal.mul(conversion.currentGain.value, diff).plus(cryo.value);
+        }
+    });
+
     const challenge1Data = {
         lifeBuyableCosts: computed(() =>
             Decimal.div(challenges[0].completions.value, 4).plus(1.25)
@@ -72,9 +79,17 @@ const layer = createLayer("c", () => {
 
     const challenge2Data = {
         aquaBarDiv: computed(() => Decimal.pow(1.5, challenges[1].completions.value).times(10)),
-        reward: computed(() =>
-            Decimal.mul(cryo.value, challenges[1].completions.value).plus(1).log10().plus(1)
-        )
+        reward: computed(() => {
+            let eff = Decimal.mul(cryo.value, challenges[1].completions.value)
+                .plus(1)
+                .log10()
+                .plus(1);
+
+            if (Decimal.gte(combinators.best.value, 3))
+                eff = eff.pow(combinators.multiBuyableEffects[3].value);
+
+            return eff;
+        })
     };
 
     const challenge3Data = {

@@ -23,7 +23,7 @@ import Decimal, { DecimalSource, format } from "util/bignum";
 import { render } from "util/vue";
 import { computed, unref } from "vue";
 import { createLayerTreeNode, createResetButton } from "../../common";
-import advancements from "../Advancements";
+import advancements from "../side/Advancements";
 import life from "../row1/Life";
 import combinators from "../row3/Combinators";
 
@@ -79,6 +79,10 @@ const layer = createLayer("ai", () => {
             tornado.value = Decimal.mul(tornadoMul.value, diff)
                 .plus(Decimal.pow(10, tornado.value))
                 .log10();
+        }
+
+        if (advancements.milestones[21].earned.value) {
+            air.value = Decimal.mul(conversion.currentGain.value, diff).plus(air.value);
         }
     });
 

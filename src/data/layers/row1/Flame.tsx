@@ -22,7 +22,7 @@ import { Computable } from "util/computed";
 import { format, formatWhole } from "util/break_eternity";
 import { computed, unref } from "vue";
 import life from "./Life";
-import advancements from "../Advancements";
+import advancements from "../side/Advancements";
 import lightning from "../row2/Lightning";
 import cryo from "../row2/Cryo";
 import earth from "../row2/Earth";

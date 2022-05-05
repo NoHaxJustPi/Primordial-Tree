@@ -18,7 +18,7 @@ import { computed } from "vue";
 import { globalBus } from "game/events";
 import flame from "./Flame";
 import life from "./Life";
-import advancements from "../Advancements";
+import advancements from "../side/Advancements";
 import lightning from "../row2/Lightning";
 import cryo from "../row2/Cryo";
 import earth from "../row2/Earth";

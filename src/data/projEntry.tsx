@@ -16,13 +16,15 @@ import { computed, toRaw, unref } from "vue";
 import flame from "./layers/row1/Flame";
 import life from "./layers/row1/Life";
 import aqua from "./layers/row1/Aqua";
-import advancements from "./layers/Advancements";
+import advancements from "./layers/side/Advancements";
 import lightning from "./layers/row2/Lightning";
 import cryo from "./layers/row2/Cryo";
 import air from "./layers/row2/Air";
 import earth from "./layers/row2/Earth";
 import { oneWayBranchedResetPropagation, versionGT, fixPoint4Obj } from "./helpers";
 import combinators from "./layers/row3/Combinators";
+import projInfo from "./projInfo.json";
+import lore from "./layers/side/Lore";
 
 const customResetPropagation = function (tree: GenericTree, resettingNode: GenericTreeNode): void {
     if (advancements.milestones[12].earned.value)
@@ -96,7 +98,7 @@ export const main = createLayer("main", () => {
                 [earth.treeNode, lightning.treeNode, air.treeNode, cryo.treeNode],
                 [combinators.treeNode]
             ],
-            leftSideNodes: [advancements.treeNode],
+            leftSideNodes: [advancements.treeNode, lore.treeNode],
             branches: () => {
                 const b = [];
 
@@ -209,6 +211,7 @@ export const getInitialLayers = (
     life,
     aqua,
     advancements,
+    lore,
     lightning,
     cryo,
     air,
@@ -263,6 +266,6 @@ export function fixOldSave(
     player: Partial<PlayerData>
     // eslint-disable-next-line @typescript-eslint/no-empty-function
 ): void {
-    player.modVersion = "1.1";
+    player.modVersion = projInfo.versionNumber;
 }
 /* eslint-enable @typescript-eslint/no-unused-vars */
