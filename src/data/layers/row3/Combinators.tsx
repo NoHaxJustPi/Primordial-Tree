@@ -287,7 +287,8 @@ const layer = createLayer("comb", () => {
                 title: "Wood Molecule",
                 description: "Divide the Earth Grid Cost based on Combinators.",
                 effectDisplay: "/" + format(multiBuyableEffects[5].value)
-            })
+            }),
+            purchaseLimit: moleculeLimit
         }))
     ];
 

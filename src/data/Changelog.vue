@@ -5,7 +5,7 @@
         </template>
         <template v-slot:body>
             <details>
-                <summary>v1.2 Bond Glue - <time>2022-05-05</time></summary>
+                <summary>v1.2 Bond Glue - <time>2022-05-09</time></summary>
                 <ul>
                     <li class="balancing">Balanced up to 1.4e25 Particles/s</li>
                     <li class="feature">Implemented Advancements 24-32</li>
