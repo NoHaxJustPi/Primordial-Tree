@@ -83,6 +83,8 @@ export const main = createLayer("main", () => {
         )
             gain = gain.times(combinators.multiBuyableEffects[1].value);
 
+        if (Decimal.gte(earth.gridLevel.value, 16)) gain = gain.times(earth.particleGainMult.value);
+
         return gain;
     });
 

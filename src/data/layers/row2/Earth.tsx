@@ -5,7 +5,7 @@
 import { createLayerTreeNode, createResetButton } from "data/common";
 import { createClickable } from "features/clickables/clickable";
 import { createCumulativeConversion, createPolynomialScaling } from "features/conversion";
-import { jsx, Visibility } from "features/feature";
+import { jsx, showIf, Visibility } from "features/feature";
 import { createGrid } from "features/grids/grid";
 import { createReset } from "features/reset";
 import MainDisplay from "features/resources/MainDisplay.vue";
@@ -27,6 +27,7 @@ import { main } from "../../projEntry";
 import advancements from "../side/Advancements";
 import flame from "../row1/Flame";
 import combinators from "../row3/Combinators";
+import { globalBus } from "game/events";
 
 const layer = createLayer("e", () => {
     const id = "e";
@@ -39,7 +40,10 @@ const layer = createLayer("e", () => {
     const gridLevel = createResource<DecimalSource>(0);
     const bestGridLevel = trackBest(gridLevel);
     const gridCost = computed(() => {
-        return Decimal.pow(2, gridLevel.value);
+        let cost = Decimal.pow(2, gridLevel.value);
+        if (Decimal.gte(combinators.best.value, 5))
+            cost = cost.div(combinators.multiBuyableEffects[5].value);
+        return cost;
     });
 
     const gridCellMult = computed(() => {
@@ -95,6 +99,11 @@ const layer = createLayer("e", () => {
         else return Decimal.add(baseGainAdded.value, 1).log10().div(2).plus(1).pow(2);
     });
 
+    const particleGainMult = computed(() => {
+        if (Decimal.lt(gridLevel.value, 16)) return 1;
+        else return flameMult.value.pow(1.1).div(Math.pow(100, 1.1)).plus(0.99);
+    });
+
     const conversion = createCumulativeConversion(() => ({
         scaling: createPolynomialScaling(1.5e5, 1 / 2),
         baseResource: flame.flame,
@@ -141,6 +150,26 @@ const layer = createLayer("e", () => {
         display: () => ({
             title: "Level Up",
             description: "Levels up the Earth Grid, but resets it. Requires all grid cells filled."
+        })
+    }));
+
+    const fillGrid = createClickable(() => ({
+        visibility: () => showIf(advancements.milestones[25].earned.value),
+        canClick: () =>
+            Decimal.gte(earth.value, Decimal.mul(gridCost.value, 50)) &&
+            !Object.values(grid.cells).every(cell => cell.state),
+        onClick: () => {
+            earth.value = Decimal.sub(earth.value, Decimal.mul(gridCost.value, 50));
+
+            for (let r = 1; r <= grid.rows; r++) {
+                for (let c = 1; c <= grid.cols; c++) {
+                    grid.setState(r * 100 + c, true);
+                }
+            }
+        },
+        display: () => ({
+            title: "Fill Grid",
+            description: "Cost: " + format(Decimal.mul(gridCost.value, 50)) + " Earth Particles"
         })
     }));
 
@@ -202,12 +231,18 @@ const layer = createLayer("e", () => {
         style: "width: 400px; text-align: left"
     });
 
+    globalBus.on("update", diff => {
+        if (advancements.milestones[24].earned.value)
+            earth.value = Decimal.mul(conversion.currentGain.value, diff).plus(earth.value);
+    });
+
     return {
         id,
         name,
         color,
         earth,
         best,
+        fillGrid,
         gridLevel,
         bestGridLevel,
         display: jsx(() => {
@@ -236,6 +271,11 @@ const layer = createLayer("e", () => {
                             <span v-show={Decimal.gte(gridLevel.value, 4)}>
                                 Life Buyable 6 Effect Mult: {format(lb6Mult.value, 2)}x<br />
                             </span>
+                            <span v-show={Decimal.gte(gridLevel.value, 16)}>
+                                Particle Gain Mult: {format(particleGainMult.value, 2)}x<br />
+                            </span>
+                            <br />
+                            {render(fillGrid)}
                             <br />
                             {render(grid)}
                             <br />
@@ -259,7 +299,8 @@ const layer = createLayer("e", () => {
         flameMult,
         baseGainAdded,
         torrentEffAdded,
-        lb6Mult
+        lb6Mult,
+        particleGainMult
     };
 });
 

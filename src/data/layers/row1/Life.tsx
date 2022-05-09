@@ -87,6 +87,11 @@ const layer = createLayer("l", () => {
                     air.windEff,
                     "Wind Effect",
                     advancements.milestones[6].earned
+                ),
+                createMultiplicativeModifier(
+                    combinators.mainEff,
+                    "Particle Combinator Effect",
+                    advancements.milestones[31].earned
                 )
             )
         }));

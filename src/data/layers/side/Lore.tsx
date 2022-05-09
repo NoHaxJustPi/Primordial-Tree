@@ -257,6 +257,46 @@ const layer = createLayer("lore", () => {
                     }
                 } as InfoboxOptions),
             true
+        ),
+
+        createInfobox(
+            () =>
+                ({
+                    visibility: computed(() => showIf(advancements.milestones[23].earned.value)),
+                    color: "#ff9100",
+                    title: "Heartfelt Emotion",
+                    display: jsx(() => (
+                        <>
+                            Ooh, so I can use these to strengthen molecules?
+                            <br />
+                            <br />
+                            Look, I'm tired of your sass, okay? Just let me have a fun time with
+                            this, or literally just leave, I couldn't care less.
+                            <br />
+                            <br />
+                            Wait really? You'll actually leave? Damn okay, I guess I'll be alone in
+                            this universe then, just me and the hundred quadrillion particles I
+                            create every second...
+                            <br />
+                            <br />
+                            Alright, enjoy your vacation or whatever, I'll keep building this
+                            universe I guess.
+                            <br />
+                            <br />
+                            Wait, you'll actually send one of your assistants to keep me company?
+                            Wow I'm excited, I'll have someone fun to talk to!
+                            <br />
+                            <br />
+                            Good! If you don't like them, I probably will, so please, send them over
+                            as soon as possible. Goodbye forever!
+                            <br />
+                        </>
+                    )),
+                    style: {
+                        color: "black"
+                    }
+                } as InfoboxOptions),
+            true
         )
     ];
 

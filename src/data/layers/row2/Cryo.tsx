@@ -15,7 +15,7 @@ import advancements from "../side/Advancements";
 import { main } from "data/projEntry";
 import { Challenge, createChallenge } from "features/challenges/challenge";
 import { Computable } from "util/computed";
-import { computed, unref } from "vue";
+import { computed, Ref, unref } from "vue";
 import flame from "../row1/Flame";
 import life from "../row1/Life";
 import aqua from "../row1/Aqua";
@@ -64,13 +64,16 @@ const layer = createLayer("c", () => {
         ),
         aquaParticleCost: computed(() => Decimal.div(challenges[0].completions.value, 5).plus(1.2)),
         reward: computed(() => {
+            let comps = challenges[0].completions.value;
+            if (Decimal.gte(comps, 11)) comps = Decimal.pow(comps, 2).div(11).plus(5);
+
             let reward = Decimal.add(cryo.value, 1)
                 .sqrt()
-                .times(challenges[0].completions.value)
-                .times(Decimal.pow(1.1, challenges[0].completions.value))
+                .times(comps)
+                .times(Decimal.pow(1.1, comps))
                 .plus(1);
 
-            const scs = Decimal.add(20, challenges[0].completions.value);
+            const scs = Decimal.add(20, comps);
             if (reward.gte(scs)) reward = reward.log(scs.sqrt()).pow(2).times(scs).div(4);
 
             return reward;
@@ -80,9 +83,13 @@ const layer = createLayer("c", () => {
     const challenge2Data = {
         aquaBarDiv: computed(() => Decimal.pow(1.5, challenges[1].completions.value).times(10)),
         reward: computed(() => {
-            let eff = Decimal.mul(cryo.value, challenges[1].completions.value)
+            let comps = challenges[1].completions.value;
+            if (Decimal.gte(comps, 11)) comps = Decimal.pow(comps, 2).div(11).plus(5);
+
+            let eff = Decimal.mul(cryo.value, comps)
                 .plus(1)
                 .log10()
+                .times(Decimal.gte(comps, 11) ? Decimal.sub(comps, 9).log10().plus(1).cbrt() : 1)
                 .plus(1);
 
             if (Decimal.gte(combinators.best.value, 3))
@@ -94,13 +101,18 @@ const layer = createLayer("c", () => {
 
     const challenge3Data = {
         exp: computed(() => Decimal.div(challenges[2].completions.value, 2).plus(2)),
-        reward: computed(() => Decimal.sqrt(challenges[2].completions.value).div(10).plus(1))
+        reward: computed(() => {
+            let comps = challenges[2].completions.value;
+            if (Decimal.gte(comps, 11)) comps = Decimal.pow(comps, 2).div(11).plus(5);
+
+            return Decimal.sqrt(comps).div(10).plus(1);
+        })
     };
 
     const challenges: Challenge<{
         visibility: () => Visibility.Visible | Visibility.None;
         reset: Reset<{ thingsToReset: () => Record<string, unknown>[] }>;
-        completionLimit: number;
+        completionLimit: Ref<number>;
         resource: Resource<DecimalSource>;
         goal: Computable<Decimal>;
         display: Computable<
@@ -115,12 +127,16 @@ const layer = createLayer("c", () => {
         >;
     }>[] = [
         createChallenge(() => ({
-            visibility: () => (Decimal.gte(best.value, 1) ? Visibility.Visible : Visibility.None),
+            visibility: () =>
+                Decimal.gte(best.value, 1) || advancements.milestones[26].earned.value
+                    ? Visibility.Visible
+                    : Visibility.None,
             reset: challengeReset,
-            completionLimit: 10,
+            completionLimit: computed(() => (advancements.milestones[26].earned.value ? 20 : 10)),
             resource: aqua.aqua,
             goal: () => {
-                const comps: DecimalSource = challenges[0].completions.value;
+                let comps: DecimalSource = challenges[0].completions.value;
+                if (Decimal.gte(comps, 10)) comps = Decimal.pow(comps, 2).div(10).plus(5);
                 return Decimal.pow(2, comps).times(100);
             },
             display: () => ({
@@ -128,14 +144,15 @@ const layer = createLayer("c", () => {
                     "Temperature Decrease (" +
                     formatWhole(challenges[0].completions.value) +
                     "/" +
-                    formatWhole(challenges[0].completionLimit) +
+                    formatWhole(challenges[0].completionLimit.value) +
                     ")",
                 description:
                     "Disable the Flame layer" +
                     ", Life buyable costs are raised ^" +
                     format(challenge1Data.lifeBuyableCosts.value, 2) +
                     ", and Aqua Particle base cost is raised ^" +
-                    format(challenge1Data.aquaParticleCost.value, 2),
+                    format(challenge1Data.aquaParticleCost.value, 2) +
+                    " and cannot get below 1",
                 goal: formatWhole(unref(challenges[0].goal)) + " Aqua Particles",
                 reward: "All Aqua bars are faster based on Cryo Particles.",
                 effectDisplay: format(challenge1Data.reward.value, 2) + "x"
@@ -147,10 +164,11 @@ const layer = createLayer("c", () => {
                     ? Visibility.Visible
                     : Visibility.None,
             reset: challengeReset,
-            completionLimit: 10,
+            completionLimit: computed(() => (advancements.milestones[26].earned.value ? 20 : 10)),
             resource: aqua.aqua,
             goal: () => {
-                const comps: DecimalSource = challenges[1].completions.value;
+                let comps: DecimalSource = challenges[1].completions.value;
+                if (Decimal.gte(comps, 10)) comps = Decimal.pow(comps, 2).div(10).plus(5);
                 return Decimal.pow(2.5, comps).times(150);
             },
             display: () => ({
@@ -158,7 +176,7 @@ const layer = createLayer("c", () => {
                     "Full Freeze (" +
                     formatWhole(challenges[1].completions.value) +
                     "/" +
-                    formatWhole(challenges[1].completionLimit) +
+                    formatWhole(challenges[1].completionLimit.value) +
                     ")",
                 description:
                     "Disable the Life layer" +
@@ -176,10 +194,11 @@ const layer = createLayer("c", () => {
                     ? Visibility.Visible
                     : Visibility.None,
             reset: challengeReset,
-            completionLimit: 10,
+            completionLimit: computed(() => 10), // will be more useful later lol
             resource: main.particles,
             goal: () => {
-                const comps: DecimalSource = challenges[2].completions.value;
+                let comps: DecimalSource = challenges[2].completions.value;
+                if (Decimal.gte(comps, 10)) comps = Decimal.pow(comps, 2).div(10).plus(5);
                 return Decimal.pow(10, Decimal.pow(comps, 1.5)).times(1e4);
             },
             display: () => ({
@@ -187,7 +206,7 @@ const layer = createLayer("c", () => {
                     "Absolute Zero (" +
                     formatWhole(challenges[2].completions.value) +
                     "/" +
-                    formatWhole(challenges[2].completionLimit) +
+                    formatWhole(challenges[2].completionLimit.value) +
                     ")",
                 description:
                     "Disable the Aqua layer" +
@@ -211,7 +230,27 @@ const layer = createLayer("c", () => {
     }));
 
     const reset = createReset(() => ({
-        thingsToReset: (): Record<string, unknown>[] => [layer]
+        thingsToReset: (): Record<string, unknown>[] => {
+            const ret = {
+                cryo,
+                best,
+                treeNode
+            };
+
+            if (advancements.milestones[26].earned.value) {
+                return [{ ...ret, challenge1Data, challenge2Data, challenge3Data }];
+            } else {
+                return [
+                    {
+                        ...ret,
+                        challenges,
+                        challenge1Data,
+                        challenge2Data,
+                        challenge3Data
+                    }
+                ];
+            }
+        }
     }));
 
     const treeNode = createLayerTreeNode(() => ({

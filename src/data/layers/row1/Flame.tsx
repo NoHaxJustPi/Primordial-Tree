@@ -26,6 +26,7 @@ import advancements from "../side/Advancements";
 import lightning from "../row2/Lightning";
 import cryo from "../row2/Cryo";
 import earth from "../row2/Earth";
+import combinators from "../row3/Combinators";
 import { globalBus } from "game/events";
 import { createResourceTooltip } from "features/trees/tree";
 import { addTooltip } from "features/tooltips/tooltip";
@@ -78,6 +79,11 @@ const layer = createLayer("f", () => {
                     earth.flameMult,
                     "Earth Grid Boost 1",
                     advancements.milestones[11].earned
+                ),
+                createMultiplicativeModifier(
+                    combinators.mainEff,
+                    "Particle Combinator Effect",
+                    advancements.milestones[31].earned
                 )
             )
         }));
@@ -108,16 +114,31 @@ const layer = createLayer("f", () => {
             return ret.pow(cryo.challenge3Data.reward.value);
         }),
         1: computed(() => {
-            return Decimal.add(flame.value, 1).log(20).plus(1);
+            let ret = Decimal.add(flame.value, 1).log(20).plus(1);
+
+            if (Decimal.gte(combinators.best.value, 4))
+                ret = ret.pow(combinators.multiBuyableEffects[4].value);
+
+            return ret;
         }),
         2: computed(() => {
-            return Decimal.add(flame.value, 1).log(5).plus(1);
+            return Decimal.add(flame.value, 1)
+                .log(5)
+                .plus(1)
+                .pow(advancements.milestones[29].earned.value ? 2 : 1);
         }),
         3: computed(() => {
-            return Decimal.add(flame.value, 1).log10().sqrt();
+            return Decimal.add(flame.value, 1)
+                .log10()
+                .pow(advancements.milestones[29].earned.value ? 1 : 0.5);
         }),
         4: computed(() => {
-            return Decimal.add(main.particles.value, 1).log10().plus(1).log10().plus(1);
+            return Decimal.add(main.particles.value, 1)
+                .log10()
+                .plus(1)
+                .log10()
+                .plus(1)
+                .pow(advancements.milestones[29].earned.value ? 2 : 1);
         }),
         5: computed(() => {
             return Decimal.add(flame.value, 1).log10().sqrt().times(3);

@@ -51,6 +51,15 @@ const layer = createLayer("adv", () => {
         6e13,
         1e14,
         5e14,
+        1e17,
+        1.2e18,
+        4e18,
+        1.5e19,
+        1e20,
+        5e21,
+        4.5e22,
+        1.35e23,
+        1e24,
         1 / 0
     ];
 
@@ -103,6 +112,7 @@ const layer = createLayer("adv", () => {
 
         if (milestones[8].earned.value)
             time = Decimal.sub(advancements.value, 7).times(30).plus(time);
+        if (milestones[30].earned.value) time = Infinity;
 
         return time;
     });
@@ -189,7 +199,25 @@ const layer = createLayer("adv", () => {
         createAdvancement(20, "Unlock a new Aqua Bar."),
         createAdvancement(21, "Increase the Molecule limit by 20%."),
         createAdvancement(22, "Gain 100% of Air Particle gain every second."),
-        createAdvancement(23, "Gain 100% of Cryo Particle gain every second.")
+        createAdvancement(23, "Gain 100% of Cryo Particle gain every second."),
+        createAdvancement(24, "Unlock Intrabonds."),
+        createAdvancement(25, "Gain 100% of Earth Particle gain every second."),
+        createAdvancement(26, "You can fill the Earth Grid with a single button."),
+        createAdvancement(
+            27,
+            "Keep Cryo Challenge completions on all resets, and increase the completion limits of the first two Cryo Challenges by 10."
+        ),
+        createAdvancement(28, "The Wave requirement scales 50% slower."),
+        createAdvancement(29, "Multiply Zephyr Speed and Tornado Speed by 10."),
+        createAdvancement(
+            30,
+            'Square the effect of the "Liquid Fire", "Magma Spirit" and "Speed = Heat" upgrades.'
+        ),
+        createAdvancement(
+            31,
+            "The effect of the milestone at 5 Advancements is permanently active, and all Aqua bar requirements scale 10% slower."
+        ),
+        createAdvancement(32, "The main Combinator effect also affects the first row of Particles.")
     ];
 
     return {

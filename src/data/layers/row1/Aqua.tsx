@@ -40,7 +40,9 @@ const layer = createLayer("a", () => {
 
     const bubbleTime = createResource<DecimalSource>(0);
     const bubbles = computed(() => {
-        return Decimal.log10(Decimal.add(bubbleTime.value, 1));
+        let ret = Decimal.log10(Decimal.add(bubbleTime.value, 1));
+        if (advancements.milestones[30].earned.value) ret = ret.times(1.1);
+        return ret;
     });
     const bubbleSpeed = computed(() => {
         let speed = new Decimal(1);
@@ -53,12 +55,17 @@ const layer = createLayer("a", () => {
 
     const waveTime = createResource<DecimalSource>(0);
     const waves = computed(() => {
-        return Decimal.log10(Decimal.add(waveTime.value, 1));
+        let ret = Decimal.log10(Decimal.add(waveTime.value, 1));
+        if (advancements.milestones[27].earned.value) ret = ret.times(2);
+        if (advancements.milestones[30].earned.value) ret = ret.times(1.1);
+        return ret;
     });
 
     const torrentTime = createResource<DecimalSource>(0);
     const torrents = computed(() => {
-        return Decimal.log10(Decimal.add(torrentTime.value, 1));
+        let ret = Decimal.log10(Decimal.add(torrentTime.value, 1));
+        if (advancements.milestones[30].earned.value) ret = ret.times(1.1);
+        return ret;
     });
 
     const torrentEff = computed(() => {
@@ -71,7 +78,9 @@ const layer = createLayer("a", () => {
 
     const floodTime = createResource<DecimalSource>(0);
     const floods = computed(() => {
-        return Decimal.log10(Decimal.add(floodTime.value, 1));
+        let ret = Decimal.log10(Decimal.add(floodTime.value, 1));
+        if (advancements.milestones[30].earned.value) ret = ret.times(1.1);
+        return ret;
     });
 
     globalBus.on("update", diff => {
@@ -112,7 +121,7 @@ const layer = createLayer("a", () => {
         req = req.div(Decimal.pow(2, Decimal.floor(waves.value)));
 
         if (cryo.challenges[0].active.value)
-            req = req.pow(cryo.challenge1Data.aquaParticleCost.value);
+            req = req.max(1).pow(cryo.challenge1Data.aquaParticleCost.value);
 
         return req;
     });
@@ -141,6 +150,11 @@ const layer = createLayer("a", () => {
                 () =>
                     Decimal.gte(combinators.multiBuyables[1].value, 1) &&
                     advancements.milestones[15].earned.value
+            ),
+            createMultiplicativeModifier(
+                combinators.mainEff,
+                "Particle Combinator Effect",
+                advancements.milestones[31].earned
             )
         )
     }));

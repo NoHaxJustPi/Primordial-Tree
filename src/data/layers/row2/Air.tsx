@@ -46,7 +46,9 @@ const layer = createLayer("ai", () => {
 
     const zephyr = createResource<DecimalSource>(0, "Zephyr Force");
     const zephyrMul = computed(() => {
-        return Decimal.gte(air.value, 3) ? Decimal.div(wind.value, 10) : 0;
+        return Decimal.gte(air.value, 3)
+            ? Decimal.div(wind.value, advancements.milestones[28].earned.value ? 1 : 10)
+            : 0;
     });
     const zephyrEff = computed(() => {
         return Decimal.add(zephyr.value, 1).log2();
@@ -54,7 +56,9 @@ const layer = createLayer("ai", () => {
 
     const tornado = createResource<DecimalSource>(0, "Tornado Force");
     const tornadoMul = computed(() => {
-        return Decimal.gte(air.value, 5) ? Decimal.div(zephyr.value, 10) : 0;
+        return Decimal.gte(air.value, 5)
+            ? Decimal.div(zephyr.value, advancements.milestones[28].earned.value ? 1 : 10)
+            : 0;
     });
     const tornadoEff = computed(() => {
         return Decimal.add(tornado.value, 1).log10().plus(1).log(3).plus(1).sqrt();
@@ -112,20 +116,31 @@ const layer = createLayer("ai", () => {
                         .sub(conv.gainResource.value);
             },
             currentAt: conv => {
-                if (advancements.milestones[10].earned.value)
-                    return Decimal.div(unref(conv.currentGain), 3)
+                if (advancements.milestones[10].earned.value) {
+                    let current = unref(conv.currentGain);
+                    if (conversion.gainModifier) {
+                        current = conversion.gainModifier.revert(current);
+                    }
+                    return Decimal.div(current, 3)
                         .plus(2 / 3)
                         .pow(4)
                         .times(1e4);
-                else
+                } else
                     return Decimal.pow(2, Decimal.add(conv.gainResource.value, 1).pow(1.4)).times(
                         5e3
                     );
             },
             nextAt: conv => {
-                if (advancements.milestones[10].earned.value)
-                    return Decimal.div(unref(conv.currentGain), 3).plus(1).pow(4).times(1e4);
-                else
+                if (advancements.milestones[10].earned.value) {
+                    let current: DecimalSource = Decimal.add(unref(conv.currentGain), 1);
+                    if (conversion.gainModifier) {
+                        current = conversion.gainModifier.revert(current);
+                    }
+                    return Decimal.div(current, 3)
+                        .plus(2 / 3)
+                        .pow(4)
+                        .times(1e4);
+                } else
                     return Decimal.pow(2, Decimal.add(conv.gainResource.value, 1).pow(1.4)).times(
                         5e3
                     );
