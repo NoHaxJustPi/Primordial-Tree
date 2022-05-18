@@ -5,8 +5,8 @@
 	"discordName": "Jacorb's Games",
 	"discordLink": "https://discord.gg/wwQfgPa",
 
-	"versionNumber": "1.2",
-	"versionTitle": "Bond Glue",
+	"versionNumber": "1.3",
+	"versionTitle": "For the Senses",
 
 	"allowGoBack": true,
 	"defaultShowSmall": false,
@@ -19,5 +19,5 @@
 	"maxTickLength": 3600,
 	"offlineLimit": 1,
 	"enablePausing": true,
-	"saveEncoding": "lz"
+	"exportEncoding": "base64"
 }

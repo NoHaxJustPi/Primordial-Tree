@@ -26,8 +26,9 @@ import { computed } from "vue";
 import { main } from "../../projEntry";
 import advancements from "../side/Advancements";
 import flame from "../row1/Flame";
-import combinators from "../row3/Combinators";
+import combinators from "../row4/Combinators";
 import { globalBus } from "game/events";
+import DangerButton from "components/fields/DangerButton.vue";
 
 const layer = createLayer("e", () => {
     const id = "e";
@@ -118,22 +119,24 @@ const layer = createLayer("e", () => {
         )
     }));
 
-    const levelDown = createClickable(() => ({
-        canClick: () => Decimal.gte(gridLevel.value, 1),
-        onClick: () => {
-            gridLevel.value = Decimal.sub(gridLevel.value, 1);
-            for (let r = 1; r <= grid.rows; r++) {
-                for (let c = 1; c <= grid.cols; c++) {
-                    grid.setState(r * 100 + c, true);
+    const levelDown = jsx(() => (
+        <DangerButton
+            skipConfirm={Decimal.lt(gridLevel.value, bestGridLevel.value)}
+            class="feature clickable can"
+            disabled={Decimal.lt(gridLevel.value, 1)}
+            customDisplay="WARNING: This will reset your Earth Grid!"
+            forceOnClick={() => {
+                gridLevel.value = Decimal.sub(gridLevel.value, 1);
+                for (let r = 1; r <= grid.rows; r++) {
+                    for (let c = 1; c <= grid.cols; c++) {
+                        grid.setState(r * 100 + c, true);
+                    }
                 }
-            }
-        },
-        display: () => ({
-            title: "Level Down",
-            description: " "
-        }),
-        small: true
-    }));
+            }}
+        >
+            <b>Level Down</b>
+        </DangerButton>
+    ));
 
     const levelUp = createClickable(() => ({
         canClick: () => Object.values(grid.cells).every(cell => cell.state),
@@ -231,9 +234,22 @@ const layer = createLayer("e", () => {
         style: "width: 400px; text-align: left"
     });
 
+    const autoTime = createResource<number>(0);
+
     globalBus.on("update", diff => {
         if (advancements.milestones[24].earned.value)
             earth.value = Decimal.mul(conversion.currentGain.value, diff).plus(earth.value);
+
+        if (advancements.milestones[37].earned.value) {
+            autoTime.value += diff;
+            if (autoTime.value >= 1) {
+                autoTime.value = 0;
+                if (Decimal.gte(earth.value, Decimal.mul(gridCost.value, 100))) {
+                    levelUp.onClick();
+                    fillGrid.onClick();
+                }
+            }
+        }
     });
 
     return {
@@ -300,7 +316,8 @@ const layer = createLayer("e", () => {
         baseGainAdded,
         torrentEffAdded,
         lb6Mult,
-        particleGainMult
+        particleGainMult,
+        autoTime
     };
 });
 

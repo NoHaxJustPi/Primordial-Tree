@@ -2,15 +2,15 @@
  * @module
  * @hidden
  */
-import { computed, Ref } from "@vue/reactivity";
+import { computed } from "@vue/reactivity";
 import { createLayerTreeNode } from "data/common";
-import { CoercableComponent, jsx, showIf, Visibility } from "features/feature";
+import { jsx, showIf, Visibility } from "features/feature";
 import { createInfobox, Infobox, InfoboxOptions } from "features/infoboxes/infobox";
-import { createResource } from "features/resources/resource";
 import { createLayer } from "game/layers";
-import Decimal from "util/bignum";
 import { renderJSX } from "util/vue";
 import advancements from "./Advancements";
+import light from "../row3/Light";
+import sound from "../row3/Sound";
 
 const layer = createLayer("lore", () => {
     const id = "lore";
@@ -289,6 +289,53 @@ const layer = createLayer("lore", () => {
                             <br />
                             Good! If you don't like them, I probably will, so please, send them over
                             as soon as possible. Goodbye forever!
+                            <br />
+                        </>
+                    )),
+                    style: {
+                        color: "black"
+                    }
+                } as InfoboxOptions),
+            true
+        ),
+
+        createInfobox(
+            () =>
+                ({
+                    visibility: computed(() => showIf(advancements.milestones[32].earned.value)),
+                    color: "#ffffff",
+                    title: "Correction Major",
+                    display: jsx(() => (
+                        <>
+                            Hello! Yes I'm the one making the universe here! Maybe I'm just a
+                            novice, but that's what you're here for, right?
+                            <br />
+                            <br />
+                            Wait what? You're saying that I'm underqualified for this? How dare you,
+                            just because I skipped half of my classes doesn't mean-
+                            <br />
+                            <br />
+                            Oh, you meant that I need experience before I can make a universe here?
+                            But to get experience I'd need to make a universe, right?
+                            <br />
+                            <br />
+                            So I need experience to make a universe, but need to make a universe to
+                            have experience. Jeez, I'm no million-year-old genius but that sounds
+                            like a paradox to me.
+                            <br />
+                            <br />
+                            No, you cannot take control of this operation, it's mine! You have no
+                            authority here, so leave or I'll throw over a septillion particles at
+                            you! That oughta leave a dent!
+                            <br />
+                            <br />
+                            Yeah you're right, that's barely anything, but still! You have no right!
+                            I'll mind my business, and you mind yours! Or you could actually do your
+                            job and help me out here!
+                            <br />
+                            <br />
+                            Well, I guess it's time to add something to help people sense the world
+                            around them, huh... What shall I do...
                             <br />
                         </>
                     )),

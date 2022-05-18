@@ -60,7 +60,19 @@ const layer = createLayer("adv", () => {
         4.5e22,
         1.35e23,
         1e24,
-        1 / 0
+        1.4e25,
+        1e27,
+        1.2e28,
+        6e28,
+        5e30,
+        2.5e32,
+        2.25e36,
+        5e37,
+        2e39,
+        7.2e41,
+        1.33e45,
+        3.5e46,
+        Decimal.dInf
     ];
 
     const advancements = createResource<number>(0, "Advancements");
@@ -70,12 +82,13 @@ const layer = createLayer("adv", () => {
             currentGain: conv =>
                 Decimal.gte(
                     conv.baseResource.value,
-                    reqs[new Decimal(conv.gainResource.value).toNumber()]
+                    reqs[new Decimal(conv.gainResource.value).toNumber()] || Decimal.dInf
                 )
                     ? 1
                     : 0,
-            currentAt: conv => reqs[new Decimal(conv.gainResource.value).toNumber()],
-            nextAt: conv => reqs[new Decimal(conv.gainResource.value).toNumber()]
+            currentAt: conv =>
+                reqs[new Decimal(conv.gainResource.value).toNumber()] || Decimal.dInf,
+            nextAt: conv => reqs[new Decimal(conv.gainResource.value).toNumber()] || Decimal.dInf
         },
         baseResource: main.particleGain,
         gainResource: advancements,
@@ -120,6 +133,8 @@ const layer = createLayer("adv", () => {
     const adv15eff: ComputedRef<Decimal> = computed(() => {
         return Decimal.pow(2, Decimal.root(earth.gridLevel.value, 1.5));
     });
+
+    const adv37eff = computed(() => Decimal.pow(1.2, Decimal.sub(advancements.value, 35)));
 
     function createAdvancement(adv: DecimalSource, desc: CoercableComponent) {
         const Display = coerceComponent(desc);
@@ -217,7 +232,54 @@ const layer = createLayer("adv", () => {
             31,
             "The effect of the milestone at 5 Advancements is permanently active, and all Aqua bar requirements scale 10% slower."
         ),
-        createAdvancement(32, "The main Combinator effect also affects the first row of Particles.")
+        createAdvancement(
+            32,
+            "The main Combinator effect also affects the first row of Particles."
+        ),
+        createAdvancement(
+            33,
+            "Unlock Light & Sound, square the Particle Combinator effect, and Lightning Modes are never de-selected by resets."
+        ),
+        createAdvancement(
+            34,
+            "All Light Energy colors are generated twice as fast, and you can buy max Life Buyables."
+        ),
+        createAdvancement(
+            35,
+            "Increase the Molecule limit by 20%, and the Wood Molecule effect uses a better formula."
+        ),
+        createAdvancement(
+            36,
+            "Covalent/Ionic Bond costs scale 67% slower, and all Light Energy colors are generated 3x as fast."
+        ),
+        createAdvancement(
+            37,
+            jsx(() => (
+                <>
+                    Unlock Metallic Bonds, and all Light Energy colors are generated 20% faster for
+                    every Advancement after 35 ({format(adv37eff.value)}x)
+                </>
+            ))
+        ),
+        createAdvancement(
+            38,
+            "Automatically level up and fill the Earth Grid if both are possible every second, and double Ultrasound gain."
+        ),
+        createAdvancement(
+            39,
+            "Color Energy Boosts only use up half of your Light Particles when used, and they last 50% longer."
+        ),
+        createAdvancement(40, "The amount of Magma Molecules are effectively squared."),
+        createAdvancement(41, "You can max all Molecules at once."),
+        createAdvancement(42, "All Light Energy colors are generated 4x as fast."),
+        createAdvancement(
+            43,
+            "Color Energy boosts only use up 33% of your Light Particles when used, and they last 50% longer."
+        ),
+        createAdvancement(
+            44,
+            "Gain 10% of Light Particle gain every second, and you can activate all Color Energy boosts at once if you have unlocked all seven Color Energy types."
+        )
     ];
 
     return {
@@ -227,6 +289,7 @@ const layer = createLayer("adv", () => {
         advancements,
         adv5time,
         adv15eff,
+        adv37eff,
         display: jsx(() => (
             <>
                 <MainDisplay resource={advancements} color={color} />

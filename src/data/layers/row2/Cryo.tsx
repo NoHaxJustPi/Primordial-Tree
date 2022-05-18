@@ -22,7 +22,7 @@ import aqua from "../row1/Aqua";
 import { addTooltip } from "features/tooltips/tooltip";
 import { Direction } from "util/common";
 import { createResourceTooltip } from "features/trees/tree";
-import combinators from "../row3/Combinators";
+import combinators from "../row4/Combinators";
 import {
     createSequentialModifier,
     createMultiplicativeModifier,
@@ -75,6 +75,9 @@ const layer = createLayer("c", () => {
 
             const scs = Decimal.add(20, comps);
             if (reward.gte(scs)) reward = reward.log(scs.sqrt()).pow(2).times(scs).div(4);
+
+            if (Decimal.gte(combinators.best.value, 6))
+                reward = reward.pow(combinators.multiBuyableEffects[6].value);
 
             return reward;
         })

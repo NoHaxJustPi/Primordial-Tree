@@ -26,7 +26,8 @@ import advancements from "../side/Advancements";
 import lightning from "../row2/Lightning";
 import cryo from "../row2/Cryo";
 import earth from "../row2/Earth";
-import combinators from "../row3/Combinators";
+import combinators from "../row4/Combinators";
+import sound from "../row3/Sound";
 import { globalBus } from "game/events";
 import { createResourceTooltip } from "features/trees/tree";
 import { addTooltip } from "features/tooltips/tooltip";
@@ -49,7 +50,7 @@ const layer = createLayer("f", () => {
     const time = createResource<number>(0);
     const autoDone = createResource<boolean>(false);
 
-    const baseReq = computed(() => (cryo.challenges[0].active.value ? 1 / 0 : 10));
+    const baseReq = computed(() => (cryo.challenges[0].active.value ? Decimal.dInf : 10));
 
     const conversion: Conversion<ConversionOptions & { gainModifier: Required<Modifier> }> =
         createCumulativeConversion(() => ({
@@ -84,6 +85,11 @@ const layer = createLayer("f", () => {
                     combinators.mainEff,
                     "Particle Combinator Effect",
                     advancements.milestones[31].earned
+                ),
+                createMultiplicativeModifier(
+                    sound.upgradeEffects[4],
+                    "Sound Upgrade 5",
+                    sound.upgrades[4].bought
                 )
             )
         }));

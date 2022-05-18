@@ -1,6 +1,6 @@
 <template>
     <span class="container" :class="{ confirming: isConfirming }">
-        <span v-if="isConfirming">Are you sure?</span>
+        <span v-if="isConfirming">{{ customDisplay ? customDisplay : "Are you sure?" }}</span>
         <button @click.stop="click" class="button danger" :disabled="disabled">
             <span v-if="isConfirming">Yes</span>
             <slot v-else />
@@ -15,6 +15,8 @@ import { ref, toRefs, unref, watch } from "vue";
 const _props = defineProps<{
     disabled?: boolean;
     skipConfirm?: boolean;
+    forceOnClick?: () => void;
+    customDisplay?: string;
 }>();
 const props = toRefs(_props);
 const emit = defineEmits<{
@@ -31,10 +33,12 @@ watch(isConfirming, isConfirming => {
 function click() {
     if (unref(props.skipConfirm)) {
         emit("click");
+        props?.forceOnClick?.value?.();
         return;
     }
     if (isConfirming.value) {
         emit("click");
+        props?.forceOnClick?.value?.();
     }
     isConfirming.value = !isConfirming.value;
 }

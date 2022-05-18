@@ -26,7 +26,8 @@ import { render } from "util/vue";
 import { computed } from "vue";
 import { createLayerTreeNode, createResetButton } from "../../common";
 import advancements from "../side/Advancements";
-import combinators from "../row3/Combinators";
+import combinators from "../row4/Combinators";
+import light from "../row3/Light";
 
 const layer = createLayer("li", () => {
     const id = "li";
@@ -52,6 +53,11 @@ const layer = createLayer("li", () => {
                 combinators.mainEff,
                 "Particle Combinator Effect",
                 advancements.milestones[15].earned
+            ),
+            createMultiplicativeModifier(
+                light.lightBuyableEffects[2][1],
+                "Yellow Energy Buyable 2",
+                () => Decimal.gte(light.lights[2].buyables[1].amount.value, 1)
             )
         )
     }));
@@ -186,7 +192,22 @@ const layer = createLayer("li", () => {
     ];
 
     const reset = createReset(() => ({
-        thingsToReset: (): Record<string, unknown>[] => [layer]
+        thingsToReset: (): Record<string, unknown>[] => {
+            const toReset = {
+                id,
+                name,
+                color,
+                lightning,
+                best,
+                treeNode,
+                clickables,
+                clickableEffects
+            };
+
+            if (!advancements.milestones[32].earned.value) return [{ ...toReset, lightningSel }];
+
+            return [toReset];
+        }
     }));
 
     const treeNode = createLayerTreeNode(() => ({

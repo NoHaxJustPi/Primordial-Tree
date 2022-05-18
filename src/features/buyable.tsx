@@ -46,7 +46,7 @@ export interface BuyableOptions {
     mark?: Computable<boolean | string>;
     small?: Computable<boolean>;
     display?: Computable<BuyableDisplay>;
-    onPurchase?: (cost: DecimalSource) => void;
+    onPurchase?: (cost: DecimalSource | undefined) => void;
     keepRes?: Computable<boolean>;
 }
 

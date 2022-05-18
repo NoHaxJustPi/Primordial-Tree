@@ -21,8 +21,10 @@ import lightning from "./layers/row2/Lightning";
 import cryo from "./layers/row2/Cryo";
 import air from "./layers/row2/Air";
 import earth from "./layers/row2/Earth";
-import { oneWayBranchedResetPropagation, versionGT, fixPoint4Obj } from "./helpers";
-import combinators from "./layers/row3/Combinators";
+import light from "./layers/row3/Light";
+import sound from "./layers/row3/Sound";
+import { oneWayBranchedResetPropagation, versionGT, fixPoint4Obj, emptyTreeNode } from "./helpers";
+import combinators from "./layers/row4/Combinators";
 import projInfo from "./projInfo.json";
 import lore from "./layers/side/Lore";
 
@@ -50,6 +52,9 @@ export const main = createLayer("main", () => {
         if (lightning.lightningSel[0].value) gain = gain.plus(lightning.clickableEffects[0].value);
         gain = gain.plus(earth.baseGainAdded.value);
         gain = gain.plus(combinators.multiBuyableEffects[0].value);
+
+        if (advancements.milestones[32].earned.value)
+            gain = gain.plus(light.lightBuyableEffects[1][1].value);
 
         return gain;
     });
@@ -85,6 +90,9 @@ export const main = createLayer("main", () => {
 
         if (Decimal.gte(earth.gridLevel.value, 16)) gain = gain.times(earth.particleGainMult.value);
 
+        if (advancements.milestones[32].earned.value)
+            gain = gain.times(light.lightBuyableEffects[0][1].value);
+
         return gain;
     });
 
@@ -98,6 +106,7 @@ export const main = createLayer("main", () => {
             nodes: [
                 [flame.treeNode, life.treeNode, aqua.treeNode],
                 [earth.treeNode, lightning.treeNode, air.treeNode, cryo.treeNode],
+                [light.treeNode, emptyTreeNode, sound.treeNode],
                 [combinators.treeNode]
             ],
             leftSideNodes: [advancements.treeNode, lore.treeNode],
@@ -141,6 +150,22 @@ export const main = createLayer("main", () => {
                     b.push({
                         startNode: combinators.treeNode,
                         endNode: cryo.treeNode
+                    });
+                }
+
+                if (light.treeNode.visibility.value == Visibility.Visible) {
+                    b.push({
+                        startNode: light.treeNode,
+                        endNode: lightning.treeNode,
+                        stroke: "#999999"
+                    });
+                }
+
+                if (sound.treeNode.visibility.value == Visibility.Visible) {
+                    b.push({
+                        startNode: sound.treeNode,
+                        endNode: air.treeNode,
+                        stroke: "#999999"
                     });
                 }
 
@@ -218,11 +243,13 @@ export const getInitialLayers = (
     cryo,
     air,
     earth,
-    combinators
+    combinators,
+    light,
+    sound
 ];
 
 export const hasWon = computed(() => {
-    return Decimal.gte(main.particleGain.value, 1 / 0);
+    return Decimal.gte(main.particleGain.value, Decimal.dInf);
 });
 
 /* eslint-disable @typescript-eslint/no-unused-vars */

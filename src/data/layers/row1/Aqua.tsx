@@ -26,7 +26,9 @@ import { addTooltip } from "features/tooltips/tooltip";
 import { Direction } from "util/common";
 import { createResourceTooltip } from "features/trees/tree";
 import { createMultiplicativeModifier, createSequentialModifier } from "game/modifiers";
-import combinators from "../row3/Combinators";
+import combinators from "../row4/Combinators";
+import light from "../row3/Light";
+import sound from "../row3/Sound";
 
 const layer = createLayer("a", () => {
     const id = "a";
@@ -58,6 +60,8 @@ const layer = createLayer("a", () => {
         let ret = Decimal.log10(Decimal.add(waveTime.value, 1));
         if (advancements.milestones[27].earned.value) ret = ret.times(2);
         if (advancements.milestones[30].earned.value) ret = ret.times(1.1);
+
+        if (Decimal.gte(ret, 50)) ret = Decimal.mul(ret, 50).sqrt();
         return ret;
     });
 
@@ -65,6 +69,8 @@ const layer = createLayer("a", () => {
     const torrents = computed(() => {
         let ret = Decimal.log10(Decimal.add(torrentTime.value, 1));
         if (advancements.milestones[30].earned.value) ret = ret.times(1.1);
+
+        if (Decimal.gte(ret, 40)) ret = Decimal.mul(ret, 40).sqrt();
         return ret;
     });
 
@@ -80,6 +86,8 @@ const layer = createLayer("a", () => {
     const floods = computed(() => {
         let ret = Decimal.log10(Decimal.add(floodTime.value, 1));
         if (advancements.milestones[30].earned.value) ret = ret.times(1.1);
+
+        if (Decimal.gte(ret, 30)) ret = Decimal.mul(ret, 30).sqrt();
         return ret;
     });
 
@@ -114,7 +122,7 @@ const layer = createLayer("a", () => {
     });
 
     const baseAquaParticleReq = computed(() => {
-        if (cryo.challenges[2].active.value) return new Decimal(1 / 0);
+        if (cryo.challenges[2].active.value) return Decimal.dInf;
 
         let req = new Decimal(10);
 
@@ -170,6 +178,11 @@ const layer = createLayer("a", () => {
         if (advancements.milestones[11].earned.value) speed = speed.times(2);
         if (advancements.milestones[14].earned.value)
             speed = speed.times(advancements.adv15eff.value);
+
+        if (Decimal.gte(light.lights[4].buyables[1].amount.value, 1))
+            speed = speed.times(light.lightBuyableEffects[4][1].value);
+
+        if (sound.upgrades[5].bought.value) speed = speed.times(sound.upgradeEffects[5].value);
 
         return speed;
     });

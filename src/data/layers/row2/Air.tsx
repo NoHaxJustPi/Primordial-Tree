@@ -25,7 +25,8 @@ import { computed, unref } from "vue";
 import { createLayerTreeNode, createResetButton } from "../../common";
 import advancements from "../side/Advancements";
 import life from "../row1/Life";
-import combinators from "../row3/Combinators";
+import combinators from "../row4/Combinators";
+import sound from "../row3/Sound";
 
 const layer = createLayer("ai", () => {
     const id = "ai";
@@ -36,7 +37,11 @@ const layer = createLayer("ai", () => {
 
     const wind = createResource<DecimalSource>(0, "Wind Force");
     const windMul = computed(() => {
-        return Decimal.gte(air.value, 1) ? air.value : 0;
+        let mult = Decimal.gte(air.value, 1) ? air.value : 0;
+
+        if (sound.upgrades[1].bought.value) mult = Decimal.mul(mult, sound.upgradeEffects[0].value);
+
+        return mult;
     });
     const windEff = computed(() => {
         let eff = Decimal.add(wind.value, 1);
@@ -46,9 +51,13 @@ const layer = createLayer("ai", () => {
 
     const zephyr = createResource<DecimalSource>(0, "Zephyr Force");
     const zephyrMul = computed(() => {
-        return Decimal.gte(air.value, 3)
+        let mult = Decimal.gte(air.value, 3)
             ? Decimal.div(wind.value, advancements.milestones[28].earned.value ? 1 : 10)
             : 0;
+
+        if (sound.upgrades[1].bought.value) mult = Decimal.mul(mult, sound.upgradeEffects[0].value);
+
+        return mult;
     });
     const zephyrEff = computed(() => {
         return Decimal.add(zephyr.value, 1).log2();
@@ -56,9 +65,13 @@ const layer = createLayer("ai", () => {
 
     const tornado = createResource<DecimalSource>(0, "Tornado Force");
     const tornadoMul = computed(() => {
-        return Decimal.gte(air.value, 5)
+        let mult = Decimal.gte(air.value, 5)
             ? Decimal.div(zephyr.value, advancements.milestones[28].earned.value ? 1 : 10)
             : 0;
+
+        if (sound.upgrades[1].bought.value) mult = Decimal.mul(mult, sound.upgradeEffects[0].value);
+
+        return mult;
     });
     const tornadoEff = computed(() => {
         return Decimal.add(tornado.value, 1).log10().plus(1).log(3).plus(1).sqrt();

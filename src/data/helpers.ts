@@ -1,5 +1,6 @@
 import { ScalingFunction } from "features/conversion";
-import { GenericTree, GenericTreeNode } from "features/trees/tree";
+import { Visibility } from "features/feature";
+import { createTreeNode, GenericTree, GenericTreeNode } from "features/trees/tree";
 import Decimal, { DecimalSource } from "util/bignum";
 import { Ref, unref } from "vue";
 
@@ -110,3 +111,7 @@ function fixPoint4Record<T, S extends { [key: string]: T }>(obj: S) {
 
     return newObj;
 }
+
+export const emptyTreeNode = createTreeNode(() => ({
+    visibility: Visibility.Hidden
+}));
