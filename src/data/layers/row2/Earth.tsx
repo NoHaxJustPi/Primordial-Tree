@@ -237,6 +237,7 @@ const layer = createLayer("e", () => {
     const autoTime = createResource<number>(0);
 
     globalBus.on("update", diff => {
+        const spd = player.devSpeed ?? 1
         if (advancements.milestones[24].earned.value)
             earth.value = Decimal.mul(conversion.currentGain.value, 1e4*spd);
 
