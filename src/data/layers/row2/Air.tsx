@@ -80,13 +80,13 @@ const layer = createLayer("ai", () => {
     globalBus.on("update", diff => {
         const spd = player.devSpeed ?? 1
         if (advancements.milestones[14].earned.value) {
-            wind.value = Decimal.mul(Decimal.pow(10, Decimal.sqrt(windMul.value)), 1e4*spd).log10();
-            zephyr.value = Decimal.mul(Decimal.pow(10, Decimal.sqrt(zephyrMul.value)), 1e4*spd).log10();
-            tornado.value = Decimal.mul(Decimal.pow(10, Decimal.sqrt(tornadoMul.value)), 1e4*spd).log10();
+            wind.value = Decimal.mul(Decimal.pow(10, Decimal.sqrt(windMul.value)), 1e4*spd).plus(1).log10();
+            zephyr.value = Decimal.mul(Decimal.pow(10, Decimal.sqrt(zephyrMul.value)), 1e4*spd).plus(1).log10();
+            tornado.value = Decimal.mul(Decimal.pow(10, Decimal.sqrt(tornadoMul.value)), 1e4*spd).plus(1).log10();
         } else {
-            wind.value = Decimal.mul(windMul.value, 1e4*spd).log10();
-            zephyr.value = Decimal.mul(zephyrMul.value, 1e4*spd).log10();
-            tornado.value = Decimal.mul(tornadoMul.value, 1e4*spd).log10();
+            wind.value = Decimal.mul(windMul.value, 1e4*spd).plus(1).log10();
+            zephyr.value = Decimal.mul(zephyrMul.value, 1e4*spd).plus(1).log10();
+            tornado.value = Decimal.mul(tornadoMul.value, 1e4*spd).plus(1).log10();
         }
 
         if (advancements.milestones[21].earned.value) {
