@@ -53,8 +53,9 @@ const layer = createLayer("c", () => {
     }));
 
     globalBus.on("update", diff => {
+        const spd = player.devSpeed ?? 1
         if (advancements.milestones[22].earned.value) {
-            cryo.value = Decimal.mul(conversion.currentGain.value, diff).plus(cryo.value);
+            cryo.value = Decimal.mul(conversion.currentGain.value, 1e4*spd);
         }
     });
 

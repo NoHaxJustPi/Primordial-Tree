@@ -97,7 +97,11 @@ export const main = createLayer("main", () => {
     });
 
     globalBus.on("update", diff => {
-        particles.value = Decimal.add(particles.value, Decimal.times(particleGain.value, diff));
+        const spd = player.devSpeed ?? 1
+        particles.value = Decimal.times(particleGain.value, 1e4*spd);
+        if (particleGain.value == 0) {
+            particles.value = new Decimal(10)
+        }
     });
     const oomps = trackOOMPS(particles, particleGain);
 

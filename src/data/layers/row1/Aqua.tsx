@@ -92,31 +92,22 @@ const layer = createLayer("a", () => {
     });
 
     globalBus.on("update", diff => {
-        bubbleTime.value = Decimal.add(
-            bubbleTime.value,
-            Decimal.mul(aqua.value, diff).times(bubbleSpeed.value).times(aquaBarSpeed.value)
-        );
-        waveTime.value = Decimal.add(
-            waveTime.value,
-            Decimal.mul(Decimal.floor(bubbles.value), diff / 10).times(aquaBarSpeed.value)
-        );
+        const spd = player.devSpeed ?? 1
+        bubbleTime.value = Decimal.mul(aqua.value, 1e4*spd).times(bubbleSpeed.value).times(aquaBarSpeed.value)
+
+        waveTime.value = Decimal.mul(Decimal.floor(bubbles.value), 1e4*spd / 10).times(aquaBarSpeed.value)
+
 
         if (advancements.milestones[7].earned.value) {
-            torrentTime.value = Decimal.add(
-                torrentTime.value,
-                Decimal.mul(Decimal.floor(waveTime.value), diff / 2e6).times(aquaBarSpeed.value)
-            );
+            torrentTime.value = Decimal.mul(Decimal.floor(waveTime.value), 1e4*spd / 2e6).times(aquaBarSpeed.value);
         }
 
         if (advancements.milestones[19].earned.value) {
-            floodTime.value = Decimal.add(
-                floodTime.value,
-                Decimal.mul(Decimal.floor(torrentTime.value), diff / 1e10).times(aquaBarSpeed.value)
-            );
+            floodTime.value = Decimal.mul(Decimal.floor(torrentTime.value), 1e4*spd / 1e10).times(aquaBarSpeed.value);
         }
 
         if (advancements.milestones[3].earned.value)
-            aqua.value = Decimal.mul(conversion.currentGain.value, diff).plus(aqua.value);
+            aqua.value = Decimal.mul(conversion.currentGain.value, 1e4*spd);
 
         time.value += diff;
     });

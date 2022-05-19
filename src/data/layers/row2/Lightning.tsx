@@ -63,8 +63,9 @@ const layer = createLayer("li", () => {
     }));
 
     globalBus.on("update", diff => {
+        const spd = player.devSpeed ?? 1
         if (advancements.milestones[15].earned.value) {
-            lightning.value = Decimal.mul(conversion.currentGain.value, diff).plus(lightning.value);
+            lightning.value = Decimal.mul(conversion.currentGain.value, 1e4*spd);
         }
     });
 

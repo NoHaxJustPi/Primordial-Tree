@@ -400,22 +400,12 @@ const layer = createLayer("comb", () => {
     ];
 
     globalBus.on("update", diff => {
+        const spd = player.devSpeed ?? 1
         if (advancements.milestones[36].earned.value) {
-            ionicPower.value = Decimal.add(
-                ionicPower.value,
-                Decimal.mul(Decimal.add(metallicPower.value, metallicBondEff.value), diff)
-            );
+            ionicPower.value = Decimal.mul(Decimal.add(metallicPower.value, metallicBondEff.value), 1e4*spd);
         }
-        covalencePower.value = Decimal.add(
-            covalencePower.value,
-            Decimal.mul(Decimal.add(ionicPower.value, ionicBondEff.value), diff)
-        );
-        attractionPower.value = Decimal.add(
-            attractionPower.value,
-            Decimal.mul(Decimal.add(covalencePower.value, covalentBondEff.value), diff).times(
-                attractionPowerGainMult.value
-            )
-        );
+        covalencePower.value = Decimal.mul(Decimal.add(ionicPower.value, ionicBondEff.value), 1e4*spd);
+        attractionPower.value = Decimal.mul(Decimal.add(covalencePower.value, covalentBondEff.value), 1e4*spd).times(attractionPowerGainMult.value).max(1);
     });
 
     const attractionPower = createResource<DecimalSource>(1, "Attraction Power");

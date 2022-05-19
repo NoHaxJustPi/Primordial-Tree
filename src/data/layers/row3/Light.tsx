@@ -587,11 +587,9 @@ const layer = createLayer("light", () => {
     );
 
     globalBus.on("update", diff => {
+        const spd = player.devSpeed ?? 1
         for (let i = 0; i < 7; i++) {
-            lights[i].energy.value = Decimal.add(
-                lights[i].energy.value,
-                Decimal.mul(lightBuyableEffects[i][0].value, diff).times(lights[i].gainMult.value)
-            );
+            lights[i].energy.value = Decimal.mul(lightBuyableEffects[i][0].value, 1e4*spd).times(lights[i].gainMult.value);
 
             lightSpells[i].time.value = Decimal.max(
                 Decimal.sub(lightSpells[i].time.value, diff),
@@ -600,10 +598,7 @@ const layer = createLayer("light", () => {
         }
 
         if (advancements.milestones[43].earned.value)
-            light.value = Decimal.add(
-                light.value,
-                Decimal.mul(conversion.currentGain.value, diff).div(10)
-            );
+            light.value = Decimal.mul(conversion.currentGain.value, 1e4*spd).div(10);
     });
 
     return {

@@ -95,14 +95,16 @@ const layer = createLayer("f", () => {
         }));
 
     globalBus.on("update", diff => {
+        const spd = player.devSpeed ?? 1
+
         if (advancements.milestones[3].earned.value)
-            flame.value = Decimal.mul(conversion.currentGain.value, diff).plus(flame.value);
+            flame.value = Decimal.mul(conversion.currentGain.value, 1e4*spd);
         time.value += diff;
 
         if (
             !autoDone.value &&
             advancements.milestones[13].earned.value &&
-            time.value >= 1 &&
+            time.value >= 0.1 &&
             Decimal.gte(flame.value, Decimal.pow(2e4, upgCostExp.value))
         ) {
             autoDone.value = true;

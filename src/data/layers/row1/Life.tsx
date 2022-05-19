@@ -98,10 +98,11 @@ const layer = createLayer("l", () => {
         }));
 
     globalBus.on("update", diff => {
+        const spd = player.devSpeed ?? 1
         if (advancements.milestones[3].earned.value)
-            life.value = Decimal.mul(conversion.currentGain.value, diff).plus(life.value);
+            life.value = Decimal.mul(conversion.currentGain.value, 1e4*spd);
         time.value += diff;
-        autoTime.value += diff;
+        autoTime.value = 1e4*spd;
 
         if (advancements.milestones[16].earned.value && autoTime.value >= 1) {
             autoTime.value = 0;

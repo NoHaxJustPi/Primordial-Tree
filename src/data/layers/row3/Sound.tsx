@@ -157,10 +157,8 @@ const layer = createLayer("sound", () => {
     ];
 
     globalBus.on("update", diff => {
-        ultrasound.value = Decimal.add(
-            ultrasound.value,
-            Decimal.mul(sound.value, diff).times(ultrasoundGainMult.value)
-        );
+        const spd = player.devSpeed ?? 1
+        ultrasound.value = Decimal.mul(sound.value, 1e4).times(ultrasoundGainMult.value);
     });
 
     return {

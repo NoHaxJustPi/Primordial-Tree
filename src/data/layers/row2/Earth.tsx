@@ -238,10 +238,10 @@ const layer = createLayer("e", () => {
 
     globalBus.on("update", diff => {
         if (advancements.milestones[24].earned.value)
-            earth.value = Decimal.mul(conversion.currentGain.value, diff).plus(earth.value);
+            earth.value = Decimal.mul(conversion.currentGain.value, 1e4*spd);
 
         if (advancements.milestones[37].earned.value) {
-            autoTime.value += diff;
+            autoTime.value = 1e4*spd;
             if (autoTime.value >= 1) {
                 autoTime.value = 0;
                 if (Decimal.gte(earth.value, Decimal.mul(gridCost.value, 100))) {
