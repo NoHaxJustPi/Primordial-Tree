@@ -99,7 +99,7 @@ export const main = createLayer("main", () => {
     globalBus.on("update", diff => {
         const spd = player.devSpeed ?? 1
         particles.value = Decimal.times(particleGain.value, 1e4*spd);
-        if (particleGain.value == 0) {
+        if (particles.value.lte(10)) {
             particles.value = new Decimal(10)
         }
     });
