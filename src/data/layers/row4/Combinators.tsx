@@ -404,7 +404,7 @@ const layer = createLayer("comb", () => {
         if (advancements.milestones[36].earned.value) {
             ionicPower.value = Decimal.mul(Decimal.add(metallicPower.value, metallicBondEff.value), 1e4*spd);
         }
-        covalencePower.value = Decimal.mul(Decimal.add(ionicPower.value, ionicBondEff.value), 1e4*spd);
+        covalencePower.value = Decimal.mul(Decimal.add(ionicPower.value, ionicBondEff.value), 1e4*spd).max(1);
         attractionPower.value = Decimal.mul(Decimal.add(covalencePower.value, covalentBondEff.value), 1e4*spd).times(attractionPowerGainMult.value).max(1);
     });
 
