@@ -79,9 +79,9 @@ const layer = createLayer("ai", () => {
 
     globalBus.on("update", diff => {
         const spd = player.devSpeed ?? 1
-        wind.value = new Decimal(1)
-        zephyr.value = new Decimal(1)
-        tornado.value = new Decimal(1)
+        wind.value = new Decimal(0)
+        zephyr.value = new Decimal(0)
+        tornado.value = new Decimal(0)
         for (let i = 0; i < 5; i++) {
             if (advancements.milestones[14].earned.value) {
                 wind.value = Decimal.mul(Decimal.pow(10, Decimal.sqrt(windMul.value)), 1e4*spd/5)
